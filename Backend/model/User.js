@@ -27,7 +27,8 @@ const User = sequelize.define('User', {
     },
     role: {
         type: DataTypes.ENUM('Admin','Parent','Specialist','Donor','Institution'),
-        allowNull: false
+        allowNull: false,
+        defaultValue: 'Parent' // كل المستخدمين الجدد يكونوا Parent تلقائي
     },
     profile_picture: {
         type: DataTypes.STRING(255),
