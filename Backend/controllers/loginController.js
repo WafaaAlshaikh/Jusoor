@@ -1,4 +1,3 @@
-// controller/authController.js
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const User = require('../model/User');
@@ -15,6 +14,10 @@ const login = async (req, res) => {
     const user = await User.findOne({ where: { email } });
     if (!user) {
       return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (user.status !== 'Approved') {
+      return res.status(403).json({ message: 'Account not approved yet. Please wait for admin approval.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

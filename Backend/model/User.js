@@ -1,4 +1,3 @@
-// models/User.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db'); 
 
@@ -28,15 +27,15 @@ const User = sequelize.define('User', {
     role: {
         type: DataTypes.ENUM('Admin','Parent','Specialist','Donor','Institution'),
         allowNull: false,
-        defaultValue: 'Parent' // كل المستخدمين الجدد يكونوا Parent تلقائي
+        defaultValue: 'Parent'
     },
     profile_picture: {
         type: DataTypes.STRING(255),
         allowNull: true
     },
     status: {
-        type: DataTypes.ENUM('Active','Inactive'),
-        defaultValue: 'Active'
+        type: DataTypes.ENUM('Pending', 'Approved', 'Canceled'),
+        defaultValue: 'Pending'
     },
     created_at: {
         type: DataTypes.DATE,
