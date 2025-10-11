@@ -6,6 +6,8 @@ const sequelize = require('./config/db');
 const authRoutes = require('./routes/authRoutes'); // route تسجيل المستخدم
 require('./model/index'); 
 const testRoutes = require('./routes/testRoutes');
+const forgotPasswordRoutes = require('./routes/forgotPasswordRoutes');
+
 
 
 dotenv.config();
@@ -24,6 +26,7 @@ app.get('/test', (req, res) => {
 // Auth routes
 app.use('/api/auth', authRoutes);
 app.use('/api', testRoutes);
+app.use('/api/password', forgotPasswordRoutes);
 
 
 // Start server

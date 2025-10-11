@@ -1,6 +1,12 @@
+// main.dart
 import 'package:flutter/material.dart';
-import 'package:frontend/screens/%20signup_screen.dart';
+import 'screens/signup_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/parent_dashboard.dart';
+import 'screens/forgot_password_screen.dart';
+import 'screens/reset_password_screen.dart';
+import 'screens/splash_screen.dart'; // استيراد الشاشة الافتتاحية الجديدة
+
 
 void main() {
   runApp(MyApp());
@@ -12,10 +18,17 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Jusoor App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/signup',
+      initialRoute: '/splash',
       routes: {
-        '/login': (context) => LoginScreen(),
+        '/splash': (context) => SplashScreen(), // مسار الشاشة الافتتاحية
         '/signup': (context) => SignupScreen(),
+        '/login': (context) => LoginScreen(),
+        '/parentDashboard': (context) => ParentDashboard(),
+        '/forgotPassword': (context) => ForgotPasswordScreen(),
+        '/resetPassword': (context) {
+          final args = ModalRoute.of(context)!.settings.arguments as Map;
+          return ResetPasswordScreen(email: args['email'], code: args['code']);
+        },
       },
     );
   }
