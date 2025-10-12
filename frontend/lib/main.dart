@@ -19,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Jusoor App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/specialistDashboard',
+      initialRoute: '/splash',
       routes: {
         '/splash': (context) => SplashScreen(), // مسار الشاشة الافتتاحية
         '/signup': (context) => SignupScreen(),
