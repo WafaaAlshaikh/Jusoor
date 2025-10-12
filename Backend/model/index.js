@@ -2,8 +2,8 @@ const sequelize = require('../config/db');
 
 const User = require('./User');
 const Parent = require('./Parent');
-// const Child = require('./Child');
-// const Diagnosis = require('./Diagnosis');
+const Child = require('./Child');
+const Diagnosis = require('./Diagnosis');
 // const Specialist = require('./Specialist');
 // const Institution = require('./Institution');
 // const Session = require('./Session');
