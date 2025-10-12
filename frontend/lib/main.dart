@@ -6,6 +6,7 @@ import 'screens/parent_dashboard.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/splash_screen.dart'; // استيراد الشاشة الافتتاحية الجديدة
+import 'screens/specialist_dashboard_screen.dart';
 
 
 void main() {
@@ -18,13 +19,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Jusoor App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/splash',
+      initialRoute: '/specialistDashboard',
       routes: {
         '/splash': (context) => SplashScreen(), // مسار الشاشة الافتتاحية
         '/signup': (context) => SignupScreen(),
         '/login': (context) => LoginScreen(),
         '/parentDashboard': (context) => ParentDashboard(),
         '/forgotPassword': (context) => ForgotPasswordScreen(),
+        '/specialistDashboard': (context) => SpecialistDashboardScreen(),
         '/resetPassword': (context) {
           final args = ModalRoute.of(context)!.settings.arguments as Map;
           return ResetPasswordScreen(email: args['email'], code: args['code']);
