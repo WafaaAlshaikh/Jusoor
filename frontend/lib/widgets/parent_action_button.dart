@@ -1,17 +1,12 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
-// edit colors!!!!!!!!
+
 class ParentActionButton extends StatelessWidget {
   final IconData icon;
   final String text;
   final VoidCallback onTap;
 
-  const ParentActionButton({
-    super.key,
-    required this.icon,
-    required this.text,
-    required this.onTap,
-  });
+  const ParentActionButton({super.key, required this.icon, required this.text, required this.onTap});
 
   @override
   Widget build(BuildContext context) {

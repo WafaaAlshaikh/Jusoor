@@ -4,7 +4,14 @@ import '../utils/app_colors.dart';
 import '../widgets/parent_summary_card.dart';
 import '../widgets/parent_action_button.dart';
 import '../services/api_service.dart';
+import '../models/parent.dart';
+import '../models/child.dart';
+import '../models/notification_item.dart';
+import '../models/summaries.dart';
+import '../models/dashboard_data.dart';
 
+
+// =================== DASHBOARD SCREEN ===================
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
 
@@ -14,18 +21,9 @@ class ParentDashboardScreen extends StatefulWidget {
 
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   int _selectedIndex = 0;
-
-  Map<String, dynamic> dashboardData = {
-    'parentName': 'Loading...',
-    'parentPhone': '',
-    'parentLocation': '',
-    'parentImage': '',
-    'upcomingSessions': 0,
-    'newAIAdviceCount': 0,
-    'recentNotifications': [],
-  };
-
-  List<Map<String, String>> enrolledChildren = [];
+  DashboardData? dashboardData;
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -34,64 +32,86 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Future<void> _fetchDashboardData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token') ?? '';
-      if (token.isEmpty) return;
+      final token = prefs.getString('token') ?? '';
+
+      if (token.isEmpty) {
+        setState(() {
+          _errorMessage = 'Token not found. Please login again.';
+          _isLoading = false;
+        });
+        return;
+      }
 
       final response = await ApiService.getParentDashboard(token);
+      print('Dashboard API response: $response');
+
+      if (response == null ||
+          response['parent'] == null ||
+          response['summaries'] == null) {
+        setState(() {
+          _errorMessage = 'Invalid data received from server.';
+          _isLoading = false;
+        });
+        return;
+      }
 
       setState(() {
-        dashboardData = {
-          'parentName': response['parent']['name'],
-          'parentPhone': response['parent']['phone'],
-          'parentLocation': response['parent']['address'],
-          'parentImage': response['parent']['image'] ?? '',
-          'upcomingSessions': response['summaries']['upcomingSessions'],
-          'newAIAdviceCount': response['summaries']['newAIAdviceCount'],
-          'recentNotifications': List<Map<String, dynamic>>.from(
-            response['summaries']['notifications'].map((n) => {
-              'icon': Icons.notifications,
-              'title': n['title'],
-            }),
-          ),
-        };
-
-        enrolledChildren = List<Map<String, String>>.from(
-          response['children'].map((c) => {
-            'name': c['name'],
-            'condition': c['condition'],
-            'image': c['image'] ?? '',
-          }),
-        );
+        dashboardData = DashboardData.fromJson(response);
+        _isLoading = false;
       });
     } catch (e) {
       debugPrint('Error fetching dashboard data: $e');
+      setState(() {
+        _errorMessage = 'Failed to load dashboard. Please try again.';
+        _isLoading = false;
+      });
     }
   }
 
   void _onItemTapped(int index) => setState(() => _selectedIndex = index);
 
-  // ---------------- Parent Avatar ----------------
-  Widget _buildParentAvatar() {
-    final image = dashboardData['parentImage'] ?? '';
-    final name = dashboardData['parentName'] ?? '?';
-
-    if (image.isNotEmpty) {
-      return CircleAvatar(
-        radius: 30,
-        backgroundImage: NetworkImage(image),
-      );
-    } else {
-      return CircleAvatar(
-        radius: 30,
-        backgroundColor: ParentAppColors.primaryTeal.withOpacity(0.4),
-        child: Text(
-          name[0].toUpperCase(),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
+  // =================== AVATAR BUILDER ===================
+  Widget _buildAvatar({required String name, required String image, double radius = 30}) {
+    return CircleAvatar(
+      radius: radius,
+      backgroundColor: ParentAppColors.primaryTeal.withOpacity(0.4),
+      child: image.isNotEmpty
+          ? ClipOval(
+        child: Image.network(
+          image,
+          width: radius * 2,
+          height: radius * 2,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Center(
+              child: Text(
+                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            );
+          },
         ),
-      );
-    }
+      )
+          : Text(
+        name.isNotEmpty ? name[0].toUpperCase() : '?',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 
   @override
@@ -99,7 +119,23 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     return Scaffold(
       backgroundColor: ParentAppColors.backgroundLight,
       appBar: _buildAppBar(),
-      body: SingleChildScrollView(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _errorMessage != null
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(_errorMessage!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _fetchDashboardData,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      )
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +156,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ---------------- AppBar ----------------
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -140,7 +175,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               icon: const Icon(Icons.notifications_none, color: ParentAppColors.textDark),
               onPressed: () {},
             ),
-            if (dashboardData['upcomingSessions'] > 0)
+            if ((dashboardData?.summaries.upcomingSessions ?? 0) > 0)
               const Positioned(
                 right: 11,
                 top: 11,
@@ -150,14 +185,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: _buildParentAvatar(),
+          child: _buildAvatar(
+              name: dashboardData?.parent.name ?? '',
+              image: dashboardData?.parent.profilePicture ?? ''),
         ),
       ],
     );
   }
 
-  // ---------------- Profile & Children ----------------
   Widget _buildParentProfileAndChildrenSummary() {
+    final children = dashboardData?.children ?? [];
+
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -176,23 +214,24 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         children: [
           Row(
             children: [
-              _buildParentAvatar(),
+              _buildAvatar(
+                  name: dashboardData?.parent.name ?? '',
+                  image: dashboardData?.parent.profilePicture ?? ''),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Welcome Back, ${dashboardData['parentName']}!',
+                      'Welcome Back, ${dashboardData?.parent.name ?? '?'}!',
                       style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: ParentAppColors.textDark),
                     ),
                     Text(
-                      '${dashboardData['parentLocation']} | ${dashboardData['parentPhone']}',
-                      style: const TextStyle(
-                          color: ParentAppColors.textGrey, fontSize: 13),
+                      '${dashboardData?.parent.address ?? ''} | ${dashboardData?.parent.phone ?? ''}',
+                      style: const TextStyle(color: ParentAppColors.textGrey, fontSize: 13),
                     ),
                   ],
                 ),
@@ -201,7 +240,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
           const Divider(height: 30),
           Text(
-            'Enrolled Children (${enrolledChildren.length})',
+            'Enrolled Children (${children.length})',
             style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -212,39 +251,30 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             height: 80,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: enrolledChildren.length,
+              itemCount: children.length,
               itemBuilder: (context, index) {
-                final child = enrolledChildren[index];
+                final child = children[index];
                 return Padding(
                   padding: const EdgeInsets.only(right: 15),
                   child: GestureDetector(
                     onTap: () {},
                     child: Column(
                       children: [
-                        child['image']!.isEmpty
-                            ? CircleAvatar(
-                          radius: 25,
-                          backgroundColor:
-                          ParentAppColors.primaryTeal.withOpacity(0.4),
-                          child: Text(
-                            child['name']![0].toUpperCase(),
-                            style: const TextStyle(
-                                color: Colors.white, fontSize: 18),
-                          ),
-                        )
-                            : CircleAvatar(
-                          radius: 25,
-                          backgroundImage: NetworkImage(child['image']!),
-                        ),
+                        _buildAvatar(
+                            name: child.name,
+                            image: child.image,
+                            radius: 25),
                         const SizedBox(height: 4),
-                        Text(child['name']!,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: ParentAppColors.textDark)),
-                        Text(child['condition']!,
-                            style: const TextStyle(
-                                fontSize: 10,
-                                color: ParentAppColors.textGrey)),
+                        Text(
+                          child.name,
+                          style: const TextStyle(
+                              fontSize: 12, color: ParentAppColors.textDark),
+                        ),
+                        Text(
+                          child.condition,
+                          style: const TextStyle(
+                              fontSize: 10, color: ParentAppColors.textGrey),
+                        ),
                       ],
                     ),
                   ),
@@ -257,7 +287,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ---------------- AI Tip Card ----------------
   Widget _buildAITipCard() {
     return Container(
       padding: const EdgeInsets.all(15),
@@ -294,8 +323,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ---------------- Quick Summaries ----------------
   Widget _buildQuickSummaries() {
+    final summaries = dashboardData?.summaries;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -315,7 +345,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ParentSummaryCard(
                 icon: Icons.calendar_today,
                 title: 'Upcoming Sessions',
-                count: dashboardData['upcomingSessions'],
+                count: summaries?.upcomingSessions ?? 0,
                 buttonText: 'View Calendar ➔',
                 onTap: () {},
                 color: ParentAppColors.primaryTeal,
@@ -323,7 +353,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ParentSummaryCard(
                 icon: Icons.auto_awesome,
                 title: 'New AI Advice',
-                count: dashboardData['newAIAdviceCount'],
+                count: summaries?.newAIAdviceCount ?? 0,
                 buttonText: 'See Archive ➔',
                 onTap: () {},
                 color: ParentAppColors.accentOrange,
@@ -331,7 +361,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ParentSummaryCard(
                 icon: Icons.people_alt_outlined,
                 title: 'Children Enrolled',
-                count: enrolledChildren.length,
+                count: dashboardData?.children.length ?? 0,
                 buttonText: 'Manage Children ➔',
                 onTap: () {},
                 color: ParentAppColors.primaryTeal,
@@ -343,7 +373,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ---------------- Main Actions Grid ----------------
   Widget _buildMainActionsGrid() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,8 +415,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ---------------- Notifications Feed ----------------
   Widget _buildRecentNotificationsFeed() {
+    final notifications = dashboardData?.summaries.notifications ?? [];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -399,10 +429,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               color: ParentAppColors.textDark),
         ),
         const SizedBox(height: 15),
-        ...dashboardData['recentNotifications'].map<Widget>((activity) {
+        ...notifications.map((activity) {
           return ListTile(
-            leading: Icon(activity['icon'], color: ParentAppColors.primaryTeal),
-            title: Text(activity['title'],
+            leading: const Icon(Icons.notifications, color: ParentAppColors.primaryTeal),
+            title: Text(activity.title,
                 style: const TextStyle(fontWeight: FontWeight.w500)),
             subtitle: const Text('2 hours ago',
                 style: TextStyle(color: ParentAppColors.textGrey)),
@@ -415,7 +445,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     );
   }
 
-  // ---------------- Bottom Navigation ----------------
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
       items: const [
