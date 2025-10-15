@@ -9,9 +9,8 @@ const Donation = require('../model/Donation');
 
 const getParentDashboard = async (req, res) => {
   try {
-    const parentId = req.user.user_id; // assuming token middleware sets req.user
+    const parentId = req.user.user_id; 
 
-    // بيانات الأب
     const parent = await Parent.findOne({
       where: { parent_id: parentId },
       include: [
@@ -20,23 +19,19 @@ const getParentDashboard = async (req, res) => {
     });
     if (!parent) return res.status(404).json({ message: 'Parent not found' });
 
-    // بيانات الأطفال
     const children = await Child.findAll({
       where: { parent_id: parentId },
       include: [{ model: Diagnosis, attributes: ['name'] }],
     });
 
-    // عدد الجلسات القادمة
     const upcomingSessions = await Session.count({
       where: { child_id: children.map(c => c.child_id), status: 'Scheduled' }
     });
 
-    // عدد النصائح AI الجديدة
     const newAIAdviceCount = await AIRecommendation.count({
       where: { child_id: children.map(c => c.child_id) }
     });
 
-    // إشعارات (يمكن تعديل حسب الحاجة)
     const notifications = [
       { icon: 'payment', title: 'Payment due for October sessions.' },
       { icon: 'check_circle', title: 'Evaluation report for Ali is ready.' },
