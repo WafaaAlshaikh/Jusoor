@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../utils/app_colors.dart';
 import '../widgets/parent_summary_card.dart';
 import '../widgets/parent_action_button.dart';
-import '../services/api_service.dart'; // تأكدي من وجود هذه الخدمة والدوال
+import '../services/api_service.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
