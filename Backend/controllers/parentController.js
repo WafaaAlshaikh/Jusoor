@@ -5,7 +5,7 @@ const User = require('../model/User');
 
 const getParentDashboard = async (req, res) => {
   try {
-    const parentId = req.user.user_id; // من الـ token
+    const parentId = req.user.user_id; 
     const parent = await Parent.findOne({
       where: { parent_id: parentId },
       include: [
