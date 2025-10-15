@@ -7,6 +7,8 @@ const authRoutes = require('./routes/authRoutes'); // route تسجيل المس�
 require('./model/index'); 
 const testRoutes = require('./routes/testRoutes');
 const forgotPasswordRoutes = require('./routes/forgotPasswordRoutes');
+const parentRoutes = require('./routes/parentRoutes');
+
 
 
 
@@ -27,6 +29,8 @@ app.get('/test', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api', testRoutes);
 app.use('/api/password', forgotPasswordRoutes);
+app.use('/api/parent', parentRoutes);
+
 
 
 // Start server

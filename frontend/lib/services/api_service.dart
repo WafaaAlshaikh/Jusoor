@@ -78,6 +78,18 @@ class ApiService {
       return {'success': false, 'message': 'Server returned invalid response'};
     }
   }
+
+  static Future<Map<String, dynamic>> getParentDashboard(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/parent/dashboard'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    return jsonDecode(response.body);
+  }
+
 }
 
 

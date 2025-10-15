@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'screens/signup_screen.dart';
 import 'screens/login_screen.dart';
-import 'screens/parent_dashboard.dart';
+import 'screens/parent_dashboard_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/splash_screen.dart'; // استيراد الشاشة الافتتاحية الجديدة
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         '/splash': (context) => SplashScreen(), // مسار الشاشة الافتتاحية
         '/signup': (context) => SignupScreen(),
         '/login': (context) => LoginScreen(),
-        '/parentDashboard': (context) => ParentDashboard(),
+        '/parentDashboard': (context) => ParentDashboardScreen(),
         '/forgotPassword': (context) => ForgotPasswordScreen(),
         '/specialistDashboard': (context) => SpecialistDashboardScreen(),
         '/resetPassword': (context) {

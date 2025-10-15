@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'forgot_password_screen.dart';
@@ -18,8 +19,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => isLoading = true);
 
-    final response =
-    await ApiService.login({'email': email.trim(), 'password': password});
+    final response = await ApiService.login({'email': email.trim(), 'password': password});
     setState(() => isLoading = false);
 
     final message = response['message'] ?? 'Unknown error';
@@ -33,6 +33,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
+      // 🟢 حفظ التوكن
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', response['token']);
+
+      // التوجيه حسب الدور
       final role = response['user']['role'];
       if (role == 'Parent') {
         Navigator.pushReplacementNamed(context, '/parentDashboard');

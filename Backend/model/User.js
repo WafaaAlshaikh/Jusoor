@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db'); 
+const sequelize = require('../config/db');
+const Institution = require('./Institution');
 
 const User = sequelize.define('User', {
     user_id: {
@@ -25,9 +26,19 @@ const User = sequelize.define('User', {
         allowNull: true
     },
     role: {
-        type: DataTypes.ENUM('Admin','Parent','Specialist','Donor','Institution'),
+        type: DataTypes.ENUM('Admin','Parent','Specialist','Donor','Manager'),
         allowNull: false,
         defaultValue: 'Parent'
+    },
+    institution_id: {
+        type: DataTypes.BIGINT.UNSIGNED,
+        allowNull: true,
+        references: {
+            model: Institution,
+            key: 'institution_id'
+        },
+        onDelete: 'SET NULL',
+        onUpdate: 'CASCADE'
     },
     profile_picture: {
         type: DataTypes.STRING(255),
@@ -47,7 +58,11 @@ const User = sequelize.define('User', {
     }
 }, {
     tableName: 'Users',
-    timestamps: false, 
+    timestamps: false
 });
+
+// العلاقة بين المؤسسة والمستخدمين
+User.belongsTo(Institution, { foreignKey: 'institution_id', as: 'institution' });
+Institution.hasMany(User, { foreignKey: 'institution_id', as: 'users' });
 
 module.exports = User;

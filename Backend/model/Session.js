@@ -1,11 +1,11 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/db');
 
 const Session = sequelize.define('Session', {
   session_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  child_id: { type: DataTypes.INTEGER, allowNull: false },
-  specialist_id: { type: DataTypes.INTEGER, allowNull: false },
-  institution_id: { type: DataTypes.INTEGER, allowNull: false },
+  child_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  specialist_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
+  institution_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
   date: { type: DataTypes.DATEONLY, allowNull: false },
   time: { type: DataTypes.TIME, allowNull: false },
   duration: DataTypes.INTEGER,
