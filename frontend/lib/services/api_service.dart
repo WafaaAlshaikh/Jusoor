@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/child_model.dart';
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:5000/api/auth'; // محاكي Android يستخدم localhost
@@ -112,6 +113,67 @@ class ApiService {
     }
   }
 
+
+  static Future<List<Child>> getChildren(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/children'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return data.map((c) => Child.fromJson(c)).toList();
+    } else {
+      throw Exception('Failed to fetch children: ${response.statusCode}');
+    }
+  }
+
+  static Future<Child> addChild(String token, Child child) async {
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:5000/api/children'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(child.toJson()),
+    );
+    if (response.statusCode == 201) {
+      return Child.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to add child: ${response.body}');
+    }
+  }
+
+  static Future<Child> updateChild(String token, int id, Child child) async {
+    final response = await http.put(
+      Uri.parse('http://10.0.2.2:5000/api/children/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode(child.toJson()),
+    );
+    if (response.statusCode == 200) {
+      return Child.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to update child: ${response.body}');
+    }
+  }
+
+  static Future<void> deleteChild(String token, int id) async {
+    final response = await http.delete(
+      Uri.parse('http://10.0.2.2:5000/api/children/$id'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete child: ${response.body}');
+    }
+  }
 
 }
 

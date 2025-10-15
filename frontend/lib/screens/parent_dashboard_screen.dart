@@ -6,11 +6,12 @@ import '../widgets/parent_action_button.dart';
 import '../services/api_service.dart';
 import '../models/parent.dart';
 import '../models/child.dart';
+import '../models/child_model.dart';
 import '../models/notification_item.dart';
 import '../models/summaries.dart';
 import '../models/dashboard_data.dart';
 import 'upcoming_sessions_screen.dart';
-
+import 'manage_children_screen.dart';
 
 
 // =================== DASHBOARD SCREEN ===================
@@ -404,9 +405,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 title: 'Children Enrolled',
                 count: dashboardData?.children.length ?? 0,
                 buttonText: 'Manage Children ➔',
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageChildrenScreen(),
+                    ),
+                  );
+                },
                 color: ParentAppColors.primaryTeal,
               ),
+
             ],
           ),
         ),
@@ -443,9 +452,18 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 text: 'Browse Centers',
                 onTap: () {}),
             ParentActionButton(
-                icon: Icons.child_care_outlined,
-                text: 'Register New Child',
-                onTap: () {}),
+              icon: Icons.child_care_outlined,
+              text: 'Register New Child',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ManageChildrenScreen(),
+                  ),
+                );
+              },
+            ),
+
             ParentActionButton(
                 icon: Icons.forum_outlined,
                 text: 'Community Forums',
