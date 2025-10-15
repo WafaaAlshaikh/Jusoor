@@ -9,6 +9,8 @@ import '../models/child.dart';
 import '../models/notification_item.dart';
 import '../models/summaries.dart';
 import '../models/dashboard_data.dart';
+import 'upcoming_sessions_screen.dart';
+
 
 
 // =================== DASHBOARD SCREEN ===================
@@ -347,9 +349,48 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 title: 'Upcoming Sessions',
                 count: summaries?.upcomingSessions ?? 0,
                 buttonText: 'View Calendar ➔',
-                onTap: () {},
+                onTap: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final token = prefs.getString('token') ?? '';
+
+                  if (token.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Token not found. Please login again.')),
+                    );
+                    return;
+                  }
+
+                  try {
+                    final sessions = await ApiService.getUpcomingSessions(token);
+
+                    if (sessions.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('No upcoming sessions found')),
+                      );
+                      return;
+                    }
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => UpcomingSessionsScreen(
+                          upcomingSessions: sessions, // هاي نفس الي كانت
+                          completedSessions: const [], // مؤقتاً ما في داتا للجلسات المنتهية
+                        ),
+
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error fetching sessions: $e')),
+                    );
+                  }
+
+                },
                 color: ParentAppColors.primaryTeal,
               ),
+
+
               ParentSummaryCard(
                 icon: Icons.auto_awesome,
                 title: 'New AI Advice',

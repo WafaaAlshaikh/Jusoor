@@ -1,13 +1,14 @@
+// models/notification_item.dart
 class NotificationItem {
-  final String icon;
   final String title;
+  final String date;
 
-  NotificationItem({required this.icon, required this.title});
+  NotificationItem({required this.title, required this.date});
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) {
     return NotificationItem(
-      icon: json['icon'] ?? 'notifications',
       title: json['title'] ?? '',
+      date: json['date'] ?? '',
     );
   }
 }
