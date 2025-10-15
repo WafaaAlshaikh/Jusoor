@@ -2,23 +2,46 @@ const Parent = require('../model/Parent');
 const Child = require('../model/Child');
 const Diagnosis = require('../model/Diagnosis');
 const User = require('../model/User');
+const Session = require('../model/Session');
+const AIRecommendation = require('../model/AIRecommendation');
+const Payment = require('../model/Payment');
+const Donation = require('../model/Donation');
 
 const getParentDashboard = async (req, res) => {
   try {
-    const parentId = req.user.user_id; 
+    const parentId = req.user.user_id; // assuming token middleware sets req.user
+
+    // بيانات الأب
     const parent = await Parent.findOne({
       where: { parent_id: parentId },
       include: [
         { model: User, attributes: ['full_name', 'email', 'phone', 'profile_picture'] },
       ]
     });
-
     if (!parent) return res.status(404).json({ message: 'Parent not found' });
 
+    // بيانات الأطفال
     const children = await Child.findAll({
       where: { parent_id: parentId },
       include: [{ model: Diagnosis, attributes: ['name'] }],
     });
+
+    // عدد الجلسات القادمة
+    const upcomingSessions = await Session.count({
+      where: { child_id: children.map(c => c.child_id), status: 'Scheduled' }
+    });
+
+    // عدد النصائح AI الجديدة
+    const newAIAdviceCount = await AIRecommendation.count({
+      where: { child_id: children.map(c => c.child_id) }
+    });
+
+    // إشعارات (يمكن تعديل حسب الحاجة)
+    const notifications = [
+      { icon: 'payment', title: 'Payment due for October sessions.' },
+      { icon: 'check_circle', title: 'Evaluation report for Ali is ready.' },
+      { icon: 'campaign', title: 'New donation campaign launched.' },
+    ];
 
     res.status(200).json({
       parent: {
@@ -34,15 +57,12 @@ const getParentDashboard = async (req, res) => {
         image: c.photo,
       })),
       summaries: {
-        upcomingSessions: 3,
-        newAIAdviceCount: 5,
-        notifications: [
-          { icon: 'payment', title: 'Payment due for October sessions.' },
-          { icon: 'check_circle', title: 'Evaluation report for Ali is ready.' },
-          { icon: 'campaign', title: 'New donation campaign launched.' },
-        ]
+        upcomingSessions,
+        newAIAdviceCount,
+        notifications
       }
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

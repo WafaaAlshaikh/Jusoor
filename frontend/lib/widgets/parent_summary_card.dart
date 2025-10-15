@@ -47,25 +47,11 @@ class ParentSummaryCard extends StatelessWidget {
             const SizedBox(height: 5),
             Text(
               count.toString(),
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: ParentAppColors.textDark,
-              ),
+              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: ParentAppColors.textDark),
             ),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 12, color: ParentAppColors.textGrey),
-            ),
+            Text(title, style: const TextStyle(fontSize: 12, color: ParentAppColors.textGrey)),
             const Spacer(),
-            Text(
-              buttonText,
-              style: TextStyle(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text(buttonText, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
