@@ -8,8 +8,7 @@ require('./model/index');
 const testRoutes = require('./routes/testRoutes');
 const forgotPasswordRoutes = require('./routes/forgotPasswordRoutes');
 const parentRoutes = require('./routes/parentRoutes');
-
-
+const specialistRoutes = require('./routes/specialistRoutes');
 
 
 dotenv.config();
@@ -32,6 +31,7 @@ app.use('/api/password', forgotPasswordRoutes);
 app.use('/api/parent', parentRoutes);
 
 
+app.use('/api/specialist', specialistRoutes);
 
 // Start server
 const startServer = async () => {

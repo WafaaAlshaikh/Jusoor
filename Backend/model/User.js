@@ -65,4 +65,5 @@ const User = sequelize.define('User', {
 User.belongsTo(Institution, { foreignKey: 'institution_id', as: 'institution' });
 Institution.hasMany(User, { foreignKey: 'institution_id', as: 'users' });
 
+
 module.exports = User;

@@ -1,5 +1,8 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
+const User = require('./User');
+const Child = require('./Child');
+const Institution = require('./Institution');
 
 const Session = sequelize.define('Session', {
   session_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
@@ -13,5 +16,9 @@ const Session = sequelize.define('Session', {
   session_type: { type: DataTypes.ENUM('Online', 'Onsite'), defaultValue: 'Onsite' },
   status: { type: DataTypes.ENUM('Scheduled', 'Completed', 'Cancelled'), defaultValue: 'Scheduled' }
 });
+
+Session.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
+Session.belongsTo(Child, { foreignKey: 'child_id', as: 'child' });
+Session.belongsTo(Institution, { foreignKey: 'institution_id', as: 'institution' });
 
 module.exports = Session;
