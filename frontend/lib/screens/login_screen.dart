@@ -34,9 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      // 🟢 حفظ التوكن
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('auth_token', response['token']);
+     
 
       // التوجيه حسب الدور
       final role = response['user']['role'];
