@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/db');
 
 const AIParentInteraction = sequelize.define('AIParentInteraction', {
   interaction_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

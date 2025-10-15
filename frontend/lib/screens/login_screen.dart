@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'forgot_password_screen.dart';
 
@@ -34,6 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (success && mounted) {
       final role = response['user']['role'];
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', response['token']); // تم التصحيح هنا
+
       if (role == 'Parent') {
         Navigator.pushReplacementNamed(context, '/parentDashboard');
       } else if (role == 'Specialist') {
@@ -57,8 +61,6 @@ class _LoginScreenState extends State<LoginScreen> {
             key: _formKey,
             child: Column(
               children: [
-
-
                 // Tabs: Login / Signup
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -90,21 +92,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                SizedBox(height: 40),
+                SizedBox(height: 20),
                 // Logo
                 Image.asset(
                   'assets/images/jusoor_logo.png',
                   height: 100,
                 ),
-                SizedBox(height: 30),
+                SizedBox(height: 20),
                 // Email
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Your Email',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                          color: Colors.grey[800])),
+                  child: Text(
+                    'Your Email',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      color: Color(0xFF7815A0),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 8),
                 TextFormField(
@@ -115,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                      BorderSide(color: Colors.grey[300]!, width: 1.2),
+                      BorderSide(color: Color(0xFF7815A0), width: 1.2),
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
@@ -128,11 +133,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Password
                 Align(
                   alignment: Alignment.centerLeft,
-                  child: Text('Password',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 16,
-                          color: Colors.grey[800])),
+                  child: Text(
+                    'Password',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      color: Color(0xFF7815A0),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 8),
                 TextFormField(
@@ -142,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide:
-                      BorderSide(color: Colors.grey[300]!, width: 1.2),
+                      BorderSide(color: Color(0xFF7815A0), width: 1.2),
                     ),
                     suffixIcon: IconButton(
                       icon: Icon(showPassword
@@ -151,7 +159,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () =>
                           setState(() => showPassword = !showPassword),
                       color: Color(0xFF7815A0),
-
                     ),
                   ),
                   obscureText: !showPassword,
@@ -194,9 +201,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: isLoading ? null : submit,
                     child: isLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text('Continue',
-                        style:
-                        TextStyle(fontSize: 18, color: Colors.white)),
+                        : Text(
+                      'Continue',
+                      style:
+                      TextStyle(fontSize: 18, color: Colors.white),
+                    ),
                   ),
                 ),
 
@@ -208,7 +217,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(child: Divider(thickness: 1, color: Colors.grey)),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('Or', style: TextStyle(color: Colors.grey[700])),
+                      child: Text('Or',
+                          style: TextStyle(color: Colors.grey[700])),
                     ),
                     Expanded(child: Divider(thickness: 1, color: Colors.grey)),
                   ],
@@ -245,14 +255,15 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    icon: Image.asset('assets/images/jusoor_logo.png', height: 20),
+                    icon: Image.asset('assets/images/jusoor_logo.png',
+                        height: 20),
                     label: Text('Login with Google',
                         style: TextStyle(color: Color(0xFF7815A0))),
                     onPressed: () {},
                   ),
                 ),
 
-                SizedBox(height: 25),
+                SizedBox(height: 10),
 
                 // Signup link
                 Row(
@@ -264,7 +275,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         Navigator.pushReplacementNamed(context, '/signup');
                       },
-                      child: Text('Sign up', style: TextStyle(color: Color(0xFF7815A0))),
+                      child: Text('Sign up',
+                          style: TextStyle(color: Color(0xFF7815A0))),
                     ),
                   ],
                 ),

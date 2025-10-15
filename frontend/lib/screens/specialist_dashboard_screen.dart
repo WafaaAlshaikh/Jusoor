@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
-
+import '../services/specialist_api.dart';
+import '../theme/app_colors.dart';
+import 'package:frontend/screens/specialist_sessions_screen.dart';
+import 'package:frontend/screens/specialist_children_screen.dart';
+import 'package:frontend/screens/add_evaluation_screen.dart';
+import 'package:frontend/screens/full_vacation_request_screen.dart';
 // -------------------------------------------------------------------
-// 1. Specialist Dashboard Screen
+// Specialist Dashboard Screen (مربوط بالباك + عناصر إضافية)
 // -------------------------------------------------------------------
-class AppColors {
-  static const Color primaryPurple = Color(0xFFA3A1F7); // البنفسجي الفاتح
-  static const Color darkPurple = Color(0xFF6A5ACD); // بنفسجي أغمق للـ CTA
-  static const Color backgroundLight = Color(0xFFF9F9F9); // خلفية خفيفة
-  static const Color textDark = Color(0xFF333333);
-  static const Color textGrey = Color(0xFF888888);
-}
 
 class SpecialistDashboardScreen extends StatefulWidget {
-  const SpecialistDashboardScreen({super.key});
+  const SpecialistDashboardScreen({Key? key}) : super(key: key);
 
   @override
   State<SpecialistDashboardScreen> createState() =>
@@ -22,239 +19,289 @@ class SpecialistDashboardScreen extends StatefulWidget {
 }
 
 class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
-  int _selectedIndex = 0; // لـ Bottom Navigation Bar
+  Map<String, dynamic> dashboardData = {};
+  bool isLoading = true;
 
-  // بيانات وهمية للعرض
-  final Map<String, dynamic> dashboardData = {
-    'upcomingSessionsCount': 3,
-    'childrenCount': 12,
-    'unreadMessagesCount': 2,
-    'latestInsight': 'Improvement of 20% in communication skills for Mohammed.',
-    'recentActivities': [
-      {'icon': Icons.check_circle, 'title': 'Session with Sarah completed.'},
-      {'icon': Icons.history, 'title': 'Initial evaluation added for Ali.'},
-      {'icon': Icons.campaign, 'title': 'Institution (Center X) launched a new campaign.'},
-    ],
-    'hasOnlineSessionNow': true, // حالة زر الـ CTA العائم
-  };
+  // بيانات وهمية إضافية
+  final List<Map<String, dynamic>> recentActivities = [
+    {'icon': Icons.check_circle, 'title': 'Session with Sarah completed.'},
+    {'icon': Icons.history, 'title': 'Initial evaluation added for Ali.'},
+    {'icon': Icons.campaign, 'title': 'Institution (Center X) launched a new campaign.'},
+  ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    // هنا يمكن إضافة منطق التنقل بين الصفحات
+  final int unreadMessagesCount = 2;
+  bool hasOnlineSessionNow = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  Future<void> fetchData() async {
+    try {
+      final profile = await SpecialistService.getProfileInfo();
+      final upcomingCount = await SpecialistService.getUpcomingSessionsCount();
+      final childrenCount = await SpecialistService.getChildrenCount();
+
+      setState(() {
+        dashboardData = {
+          'name': profile['name'],
+          'avatar': profile['avatar'],
+          'upcomingSessionsCount': upcomingCount,
+          'childrenCount': childrenCount,
+        };
+        isLoading = false;
+      });
+    } catch (e) {
+      print('❌ Error fetching dashboard data: $e');
+      setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            // الطبقة 2: بطاقات الملخص
-            _buildSummaryCards(context),
-            const SizedBox(height: 30),
-
-            // الطبقة 4: شبكة الإجراءات السريعة
-            _buildQuickActionsGrid(),
-            const SizedBox(height: 30),
-
-            // الطبقة 5: موجز النشاطات الأخيرة
+          children: [
+            _buildSummaryCards(),
+            const SizedBox(height: 27),
+            _buildQuickActions(),
+            const SizedBox(height: 24),
             _buildRecentActivityFeed(),
           ],
         ),
       ),
-      // الطبقة 3: زر الإجراء الرئيسي العائم (F-CTA)
-      floatingActionButton: dashboardData['hasOnlineSessionNow'] == true
-          ? _buildFloatingCTA()
-          : null,
+      floatingActionButton: hasOnlineSessionNow ? _buildFloatingCTA() : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-
-      // الطبقة 6: شريط التنقل السفلي الثابت
       bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  // -------------------------------------------------------------------
-  // A. الطبقة 1: شريط التنقل العلوي (AppBar)
-  // -------------------------------------------------------------------
-  AppBar _buildAppBar() {
+  PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.primary,
       elevation: 0,
-      automaticallyImplyLeading: false, // لا نريد زر العودة في الـ Dashboard
-      title: const Text(
-        'Specialist Dashboard',
-        style: TextStyle(
-          color: AppColors.textDark,
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
+      title: Text(
+        dashboardData['name'] ?? 'Specialist Dashboard',
+        style: const TextStyle(
+          color: AppColors.textName,
+          // fontWeight: FontWeight.bold,
+          fontSize: 21,
         ),
       ),
-      actions: <Widget>[
-        // أيقونة الإشعارات
+      actions: [
         Stack(
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_none, color: AppColors.textDark),
-              onPressed: () {
-                // فتح قائمة الإشعارات
-              },
+              icon: const Icon(Icons.notifications_none, color: AppColors.background),
+              onPressed: () {},
             ),
-            const Positioned(
-              right: 11,
-              top: 11,
-              child: Icon(
-                Icons.circle,
-                color: AppColors.primaryPurple,
-                size: 8,
+            if (unreadMessagesCount > 0)
+              const Positioned(
+                right: 11,
+                top: 11,
+                child: Icon(
+                  Icons.circle,
+                  color: Colors.red,
+                  size: 10,
+                ),
               ),
-            ),
           ],
         ),
-        // صورة الملف الشخصي
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 9.0),
           child: CircleAvatar(
-            backgroundColor: AppColors.primaryPurple.withOpacity(0.2),
-            backgroundImage: const NetworkImage('https://i.pravatar.cc/150?img=1'), // صورة وهمية
+            backgroundImage: dashboardData['avatar'] != null
+                ? NetworkImage(dashboardData['avatar'])
+                : null,
+            backgroundColor: AppColors.textName.withOpacity(0.9),
+            child: dashboardData['avatar'] == null
+                ? Text(
+              (dashboardData['name'] != null && dashboardData['name'].isNotEmpty)
+                  ? dashboardData['name'][0].toUpperCase()
+                  : '?',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            )
+                : null,
+
+
           ),
         ),
       ],
     );
   }
 
-  // -------------------------------------------------------------------
-  // B. الطبقة 2: بطاقات الملخص التفاعلية
-  // -------------------------------------------------------------------
-  Widget _buildSummaryCards(BuildContext context) {
+  Widget _buildSummaryCards() {
     return SizedBox(
-      height: 150, // تحديد ارتفاع ثابت للـ ScrollView الأفقي
+      height: 200,
+
       child: ListView(
         scrollDirection: Axis.horizontal,
-        children: <Widget>[
-          _SummaryCard(
-            icon: Icons.calendar_month,
-            title: 'Upcoming Sessions',
-            count: dashboardData['upcomingSessionsCount'],
-            buttonText: 'View Next ➔',
-            onTap: () {},
+        children: [
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.6,
+            child: _SummaryCard(
+              icon: Icons.calendar_month,
+              title: 'Upcoming Sessions ',
+              count: dashboardData['upcomingSessionsCount'] ?? 0,
+              buttonText: 'View ➔',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SpecialistSessionsScreen(),
+                  ),
+                );
+              },
+            ),
           ),
-          _SummaryCard(
-            icon: Icons.people,
-            title: 'My Children',
-            count: dashboardData['childrenCount'],
-            buttonText: 'View List ➔',
-            onTap: () {},
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.6,
+            child: _SummaryCard(
+              icon: Icons.people,
+              title: 'My Children',
+              count: dashboardData['childrenCount'] ?? 0,
+              buttonText: 'View ➔',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SpecialistChildrenScreen(),
+                  ),
+                );
+              },
+            ),
           ),
-          _SummaryCard(
-            icon: Icons.mail_outline,
-            title: 'New Messages',
-            count: dashboardData['unreadMessagesCount'],
-            buttonText: 'Open Messages ➔',
-            hasBadge: true,
-            onTap: () {},
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.6,
+            child: _SummaryCard(
+              icon: Icons.mail_outline,
+              title: 'New Messages',
+              count: unreadMessagesCount,
+              buttonText: 'Open Messages ➔',
+              onTap: () {},
+            ),
           ),
-          _SummaryCard(
-            icon: Icons.psychology_outlined,
-            title: 'AI Insights',
-            insightText: dashboardData['latestInsight'],
-            buttonText: 'View Details ➔',
-            onTap: () {},
+          SizedBox(
+            width: MediaQuery.of(context).size.width * 0.6,
+            child: _SummaryCard(
+              icon: Icons.psychology_outlined,
+              title: 'AI Insights',
+              count: 0,
+              buttonText: 'View Details ➔',
+              onTap: () {},
+
+            ),
           ),
         ],
       ),
     );
   }
 
-  // -------------------------------------------------------------------
-  // C. الطبقة 4: شبكة الإجراءات السريعة
-  // -------------------------------------------------------------------
-  Widget _buildQuickActionsGrid() {
+  Widget _buildQuickActions() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Quick Actions',
+          "Quick Actions",
           style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark),
+              fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark),
         ),
-        const SizedBox(height: 15),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          childAspectRatio: 2.5, // لضبط نسبة العرض إلى الارتفاع للمربعات
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          children: <Widget>[
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 20,
+          runSpacing: 14,
+          children: [
             _QuickActionButton(
-                icon: Icons.add_circle_outline, text: 'Add Session', onTap: () {}),
+              icon: Icons.add_circle_outline,
+              text: 'Add Session',
+              onTap: () {},
+            ),
             _QuickActionButton(
-                icon: Icons.edit_note, text: 'New Evaluation', onTap: () {}),
+              icon: Icons.edit_note,
+              text: 'New Evaluation',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>AddEvaluationScreen(),
+                  ),
+                );
+              },
+            ),
             _QuickActionButton(
-                icon: Icons.article_outlined, text: 'New Post/Article', onTap: () {}),
+              icon: Icons.article_outlined,
+              text: 'New Post/Article',
+              onTap: () {},
+            ),
             _QuickActionButton(
-                icon: Icons.beach_access, text: 'Vacation Request', onTap: () {}),
+              icon: Icons.beach_access,
+              text: 'Vacation Request',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>VacationRequestScreen(),
+                  ),
+                );
+              },
+
+
+
+            ),
           ],
         ),
       ],
     );
   }
 
-  // -------------------------------------------------------------------
-  // D. الطبقة 5: موجز النشاطات الأخيرة
-  // -------------------------------------------------------------------
   Widget _buildRecentActivityFeed() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 24),
         const Text(
-          'Recent Activity',
+          "Recent Activity",
           style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark),
+              fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark),
         ),
-        const SizedBox(height: 15),
-        ...dashboardData['recentActivities'].map((activity) {
+        const SizedBox(height: 12),
+        ...recentActivities.map((activity) {
           return ListTile(
-            leading: Icon(activity['icon'], color: AppColors.darkPurple),
-            title: Text(activity['title'],
-                style: const TextStyle(fontWeight: FontWeight.w500)),
-            subtitle: const Text('Just now', style: TextStyle(color: AppColors.textGrey)),
+            leading: Icon(activity['icon'], color: AppColors.primary),
+            title: Text(activity['title']),
+            subtitle: const Text("Just now",
+                style: TextStyle(color: AppColors.textGray)),
             onTap: () {},
           );
         }).toList(),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () {},
-            child: const Text('View All Activity ➔', style: TextStyle(color: AppColors.primaryPurple)),
-          ),
-        ),
       ],
     );
   }
 
-  // -------------------------------------------------------------------
-  // E. الطبقة 3: زر الإجراء الرئيسي العائم (F-CTA)
-  // -------------------------------------------------------------------
   Widget _buildFloatingCTA() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: SizedBox(
         width: double.infinity,
         child: FloatingActionButton.extended(
-          onPressed: () {
-            // منطق بدء الجلسة الأونلاين
-          },
+          onPressed: () {},
           label: const Text(
             'Start Online Session Now',
             style: TextStyle(
@@ -264,7 +311,7 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
             ),
           ),
           icon: const Icon(Icons.video_call, color: Colors.white),
-          backgroundColor: AppColors.darkPurple,
+          backgroundColor: AppColors.primary,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
@@ -273,135 +320,92 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
     );
   }
 
-  // -------------------------------------------------------------------
-  // F. الطبقة 6: شريط التنقل السفلي الثابت
-  // -------------------------------------------------------------------
   Widget _buildBottomNavigationBar() {
     return BottomNavigationBar(
-      items: const <BottomNavigationBarItem>[
-        BottomNavigationBarItem(
-          icon: Icon(Icons.dashboard),
-          label: 'Dashboard',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.calendar_month),
-          label: 'Sessions',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.group),
-          label: 'My Children',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.mail),
-          label: 'Messages',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.settings),
-          label: 'Settings',
-        ),
+      items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Dashboard'),
+        BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Sessions'),
+        BottomNavigationBarItem(icon: Icon(Icons.group), label: 'My Children'),
+        BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
       ],
-      currentIndex: _selectedIndex,
-      selectedItemColor: AppColors.darkPurple,
-      unselectedItemColor: AppColors.textGrey,
+      currentIndex: 0,
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: AppColors.textGray,
       showUnselectedLabels: true,
-      onTap: _onItemTapped,
-      type: BottomNavigationBarType.fixed, // يضمن بقاء جميع العناصر مرئية
+      type: BottomNavigationBarType.fixed,
+      onTap: (index) {},
     );
   }
 }
 
 // -------------------------------------------------------------------
-// 2. Custom Widget: Summary Card
+// Custom Widgets
 // -------------------------------------------------------------------
+
 class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final int? count;
-  final String? insightText;
+  final int count;
   final String buttonText;
-  final bool hasBadge;
   final VoidCallback onTap;
+  final String? insightText;
 
   const _SummaryCard({
     required this.icon,
     required this.title,
-    this.count,
-    this.insightText,
+    required this.count,
     required this.buttonText,
-    this.hasBadge = false,
     required this.onTap,
+    this.insightText,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: 15),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 5,
-            offset: const Offset(0, 3),
-          ),
-        ],
+    return Card(
+      color: Colors.white,
+      elevation: 3,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Icon(icon, color: AppColors.primaryPurple, size: 28),
-              if (hasBadge) // لعرض الدائرة الحمراء/البنفسجية في الرسائل
-                const Icon(Icons.circle, color: Colors.red, size: 10),
-            ],
-          ),
-          const SizedBox(height: 5),
-          count != null
-              ? Text(
-            count.toString(),
-            style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.textDark),
-          )
-              : Text(
-            insightText ?? '',
-            style: const TextStyle(
-                fontSize: 12, color: AppColors.textGrey),
-            maxLines: 3,
-            overflow: TextOverflow.ellipsis,
-          ),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 12, color: AppColors.textGrey),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: onTap,
-            child: Text(
-              buttonText,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 36),
+            const SizedBox(height: 8),
+            if (insightText == null)
+              Text(
+                '$count',
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              )
+            else
+              Text(
+                insightText!,
+                style: const TextStyle(fontSize: 12, color: AppColors.textGray),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            Text(
+              title,
               style: const TextStyle(
-                  color: AppColors.primaryPurple,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold),
+                fontSize: 16,
+                color: AppColors.textGray,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 2),
+            TextButton(onPressed: onTap, child: Text(buttonText)),
+          ],
+        ),
       ),
     );
   }
 }
 
-// -------------------------------------------------------------------
-// 3. Custom Widget: Quick Action Button
-// -------------------------------------------------------------------
 class _QuickActionButton extends StatelessWidget {
   final IconData icon;
   final String text;
@@ -418,6 +422,8 @@ class _QuickActionButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
+        width: 175,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -432,12 +438,61 @@ class _QuickActionButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(icon, color: AppColors.primaryPurple, size: 20),
+            Icon(icon, color: AppColors.primary, size: 20),
             const SizedBox(width: 8),
             Text(
               text,
               style: const TextStyle(
-                  color: AppColors.textDark, fontWeight: FontWeight.w500),
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 36),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textDark,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),

@@ -1,5 +1,5 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const sequelize = require('../config/db');
 
 const Payment = sequelize.define('Payment', {
   payment_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },

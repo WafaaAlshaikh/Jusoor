@@ -8,7 +8,7 @@ const Child = sequelize.define('Child', {
   parent_id: { type: DataTypes.BIGINT.UNSIGNED, allowNull: false },
   full_name: { type: DataTypes.STRING(100), allowNull: false },
   date_of_birth: { type: DataTypes.DATE },
-  gender: { type: DataTypes.ENUM('Male', 'Female', 'Other') },
+  gender: { type: DataTypes.ENUM('Male', 'Female') },
   diagnosis_id: { type: DataTypes.BIGINT.UNSIGNED },
   photo: { type: DataTypes.STRING(255) },
   medical_history: { type: DataTypes.TEXT },

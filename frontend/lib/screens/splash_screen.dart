@@ -136,13 +136,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         // اللوجو
                         Image.asset(
                           'assets/images/jusoor_logo.png',
-                          width: 350,
-                          height: 350,
+                          width: 200,
+                          height: 200,
                           fit: BoxFit.contain,
                           // تصميم بديل في حال فشل تحميل الصورة
                           errorBuilder: (context, error, stackTrace) => Container(
-                            width: 350,
-                            height: 350,
+                            width: 250,
+                            height: 250,
                             decoration: BoxDecoration(
                               color: primaryPastelPurple.withOpacity(0.1), // استخدام الباستيل الجديد
                               shape: BoxShape.circle,
