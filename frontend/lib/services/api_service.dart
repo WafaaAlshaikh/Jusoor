@@ -95,6 +95,24 @@ class ApiService {
     }
   }
 
+  static Future<List<dynamic>> getUpcomingSessions(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/parent/upcoming-sessions'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return List<dynamic>.from(data['sessions'] ?? []);
+    } else {
+      throw Exception('Failed to load upcoming sessions: ${response.statusCode}');
+    }
+  }
+
+
 }
 
 

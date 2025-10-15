@@ -9,6 +9,8 @@ const testRoutes = require('./routes/testRoutes');
 const forgotPasswordRoutes = require('./routes/forgotPasswordRoutes');
 const parentRoutes = require('./routes/parentRoutes');
 const specialistRoutes = require('./routes/specialistRoutes');
+const sessionRoutes = require('./routes/sessionRoutes');
+
 
 
 dotenv.config();
@@ -29,6 +31,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', testRoutes);
 app.use('/api/password', forgotPasswordRoutes);
 app.use('/api/parent', parentRoutes);
+app.use('/api/parent', sessionRoutes);
+
 
 
 app.use('/api/specialist', specialistRoutes);
