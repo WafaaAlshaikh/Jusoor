@@ -114,6 +114,8 @@ class ApiService {
   }
 
 
+
+
   static Future<List<Child>> getChildren(String token) async {
     final response = await http.get(
       Uri.parse('http://10.0.2.2:5000/api/children'),
@@ -175,6 +177,62 @@ class ApiService {
     }
   }
 
+
+
+
+  // إضافة هذه الدوال لملف api_service.dart
+
+// ================= Get Diagnoses =================
+  static Future<List<Map<String, dynamic>>> getDiagnoses(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/diagnoses'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data);
+    } else {
+      throw Exception('Failed to fetch diagnoses: ${response.statusCode}');
+    }
+  }
+
+// ================= Get Child Statistics =================
+  static Future<Map<String, dynamic>> getChildStatistics(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/children/stats'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch child statistics: ${response.statusCode}');
+    }
+  }
+
+// ================= Get Single Child =================
+  static Future<Child> getChild(String token, int childId) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/children/$childId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return Child.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to fetch child: ${response.statusCode}');
+    }
+  }
 }
 
 

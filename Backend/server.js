@@ -3,15 +3,18 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const sequelize = require('./config/db');
+
 const authRoutes = require('./routes/authRoutes'); 
-require('./model/index'); 
 const testRoutes = require('./routes/testRoutes');
 const forgotPasswordRoutes = require('./routes/forgotPasswordRoutes');
 const parentRoutes = require('./routes/parentRoutes');
 const specialistRoutes = require('./routes/specialistRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
 const childRoutes = require('./routes/childRoutes');
+const diagnosisRoutes = require('./routes/diagnosisRoutes');
 
+
+require('./model/index'); 
 
 
 dotenv.config();
@@ -34,6 +37,7 @@ app.use('/api/password', forgotPasswordRoutes);
 app.use('/api/parent', parentRoutes);
 app.use('/api/parent', sessionRoutes);
 app.use('/api/children', childRoutes);
+app.use('/api/diagnoses', diagnosisRoutes);
 
 
 
