@@ -38,37 +38,76 @@ class _ManageChildrenScreenState extends State<ManageChildrenScreen> {
     _fetchChildren();
   }
 
-  Future<void> _fetchChildren() async {
+
+  Future<void> _fetchChildren({int page = 1, int limit = 100}) async {
     setState(() {
       _isLoading = true;
       _hasError = false;
     });
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
-      final fetched = await ApiService.getChildren(token); // يرجع List<Child> كما في ApiService
+      if (token.isEmpty) throw Exception('No token');
+
+      // تحويل sort option إلى string مناسب للـ API
+      String sortStr = 'name';
+      switch (_sortOption) {
+        case ChildSortOption.name:
+          sortStr = 'name';
+          break;
+        case ChildSortOption.age:
+          sortStr = 'age';
+          break;
+        case ChildSortOption.lastSession:
+          sortStr = 'lastSession';
+          break;
+      }
+
+      final resp = await ApiService.getChildren(
+        token: token,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
+        diagnosis: _selectedCondition == 'All' ? null : _selectedCondition,
+        sort: sortStr,
+        order: 'asc',
+        page: page,
+        limit: limit,
+      );
+
+      // resp: { data: [...], meta: {...} }
+      final List<dynamic> list = resp['data'] ?? [];
+      final fetched = list.map((c) => Child.fromJson(c)).toList();
+
       setState(() {
         _allChildren = fetched;
-        _applyFilters();
+        _filteredChildren = List.from(_allChildren); // لأن السيرفر فلتر لينا
         _isLoading = false;
       });
     } catch (e) {
-      // خطأ في الشبكة أو عند ال API
       setState(() {
         _isLoading = false;
         _hasError = true;
       });
+      print('Fetch children error: $e');
     }
   }
 
+  // لم نعد بحاجة لتطبيق الفلاتر محليًا بنفس الشكل السابق
   void _applyFilters() {
+    // نتركها بسيطة لمزامنة الواجهة المحلية في حال أردنا فلترة إضافية محليًا.
     _filteredChildren = _allChildren.where((child) {
-      final matchesSearch = child.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCondition = _selectedCondition == 'All' || (child.condition ?? '') == _selectedCondition;
+      final matchesSearch = _searchQuery.isEmpty ||
+          child.fullName.toLowerCase().contains(_searchQuery.toLowerCase());
+      final matchesCondition = _selectedCondition == 'All' ||
+          (child.condition ?? '') == _selectedCondition;
       return matchesSearch && matchesCondition;
     }).toList();
-    _sortChildren();
+
+    _sortChildren(); // إذا أردنا sort client-side إضافي
   }
+
+
+
 
   void _sortChildren() {
     switch (_sortOption) {
@@ -167,26 +206,21 @@ class _ManageChildrenScreenState extends State<ManageChildrenScreen> {
             child: ChildFilterBar(
               conditions: _conditions,
               selectedCondition: _selectedCondition,
+              sortOption: _sortOption, // ✅ أضف هذا السطر
               onConditionChanged: (val) {
-                setState(() {
-                  _selectedCondition = val;
-                  _applyFilters();
-                });
+                setState(() => _selectedCondition = val);
+                _fetchChildren();
               },
               onSearchChanged: (q) {
-                setState(() {
-                  _searchQuery = q;
-                  _applyFilters();
-                });
+                setState(() => _searchQuery = q);
+                _fetchChildren();
               },
-              sortOption: _sortOption,
               onSortChanged: (opt) {
-                setState(() {
-                  _sortOption = opt;
-                  _applyFilters();
-                });
+                setState(() => _sortOption = opt);
+                _fetchChildren();
               },
             ),
+
           ),
           const Divider(height: 1),
           // المحتوى: Loading / Error / Empty / List

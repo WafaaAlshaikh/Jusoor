@@ -7,4 +7,5 @@ class ParentAppColors {
   static const Color textName = Color(0xFFE5DDFD);
   static const Color textDark = Color(0xFF333333);
   static const Color textGrey = Color(0xFF888888);
+  static const Color primaryColor = Color(0xFF4DB6AC);
 }

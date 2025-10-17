@@ -1,4 +1,4 @@
-// controllers/childController.js - الإصدار المكتمل
+// controllers/childController.js 
 const Child = require('../model/Child');
 const Diagnosis = require('../model/Diagnosis');
 const Session = require('../model/Session');
@@ -8,23 +8,88 @@ const { Op } = require('sequelize');
 exports.getChildren = async (req, res) => {
   try {
     const parentId = req.user.user_id;
-    
+
+    const {
+      search = '',
+      gender,
+      diagnosis, 
+      sort = 'name', 
+      order = 'asc',
+      page = '1',
+      limit = '50',
+    } = req.query;
+
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const pageLimit = Math.max(1, parseInt(limit, 10) || 50);
+    const offset = (pageNum - 1) * pageLimit;
+
+    const where = { parent_id: parentId };
+
+    if (search && search.trim() !== '') {
+      where.full_name = { [Op.like]: `%${search.trim()}%` };
+    }
+
+    if (gender && (gender === 'Male' || gender === 'Female')) {
+      where.gender = gender;
+    }
+
+    if (diagnosis && diagnosis !== 'All') {
+      if (!isNaN(parseInt(diagnosis, 10))) {
+        where.diagnosis_id = parseInt(diagnosis, 10);
+      } else {
+        where['$Diagnosis.name$'] = { [Op.eq]: diagnosis };
+      }
+    }
+
+   // تعديل جزء الفلترة
+let include = [
+  {
+    model: Diagnosis,
+    attributes: ['name'],
+    as: 'Diagnosis',
+    required: false // false يعني رح يظهر حتى لو ما عنده diagnosis
+  }
+];
+
+if (diagnosis && diagnosis !== 'All') {
+  // إذا diagnosis اسم وليس رقم
+  if (isNaN(parseInt(diagnosis, 10))) {
+    include = [
+      {
+        model: Diagnosis,
+        attributes: ['name'],
+        as: 'Diagnosis',
+        required: true, // مهم لتطبيق فلتر على الاسم
+        where: { name: diagnosis } // هنا فلترة الاسم
+      }
+    ];
+  } else {
+    // فلترة بالـ diagnosis_id موجودة عندك
+    where.diagnosis_id = parseInt(diagnosis, 10);
+  }
+}
+
+
+    let orderArray = [];
+    if (sort === 'age') {
+      orderArray.push(['date_of_birth', order === 'asc' ? 'ASC' : 'DESC']);
+    } else if (sort === 'lastSession') {
+       orderArray.push(['date_of_birth', 'ASC']);
+    } else {
+      orderArray.push(['full_name', order === 'asc' ? 'ASC' : 'DESC']);
+    }
+
     const children = await Child.findAll({
-      where: { parent_id: parentId },
-      include: [
-        {
-          model: Diagnosis,
-          attributes: ['name'],
-          as: 'Diagnosis'
-        }
-      ]
+      where,
+      include,
+      offset,
+      limit: pageLimit,
+      order: orderArray
     });
 
-    // معالجة البيانات لإضافة الحقول المطلوبة للفرونت
     const processedChildren = await Promise.all(children.map(async (child) => {
       const childData = child.get({ plain: true });
-      
-      // حساب العمر من تاريخ الميلاد
+
       let age = 0;
       if (childData.date_of_birth) {
         const birthDate = new Date(childData.date_of_birth);
@@ -36,7 +101,6 @@ exports.getChildren = async (req, res) => {
         }
       }
 
-      // جلب آخر جلسة للطفل
       const lastSession = await Session.findOne({
         where: { child_id: childData.child_id },
         order: [['date', 'DESC']],
@@ -52,20 +116,27 @@ exports.getChildren = async (req, res) => {
         photo: childData.photo || '',
         medical_history: childData.medical_history || '',
         condition: childData.Diagnosis ? childData.Diagnosis.name : null,
-        // الحقول الجديدة المطلوبة
         age: age,
         last_session_date: lastSession ? lastSession.date : null,
         status: 'Active'
       };
     }));
 
-    res.status(200).json(processedChildren);
+    res.status(200).json({
+      data: processedChildren,
+      meta: {
+        page: pageNum,
+        limit: pageLimit,
+        returned: processedChildren.length
+      }
+    });
 
   } catch (error) {
     console.error('Error fetching children:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // ================= GET SINGLE CHILD =================
 exports.getChild = async (req, res) => {

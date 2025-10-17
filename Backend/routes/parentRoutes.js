@@ -5,4 +5,5 @@ const { getParentDashboard } = require('../controllers/parentController');
 
 router.get('/dashboard', authMiddleware, getParentDashboard);
 
+
 module.exports = router;

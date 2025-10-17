@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/child_model.dart';
+import 'sessions_tab.dart';
+import '../models/session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class ChildTabs extends StatelessWidget {
   final Child child;
@@ -51,26 +55,23 @@ class ChildTabs extends StatelessWidget {
   );
 
   Widget _buildSessionsTab() {
-    final dummySessions = [
-      {'date': '2025-10-20', 'time': '10:00', 'type': 'Speech Therapy', 'status': 'Upcoming'},
-      {'date': '2025-10-13', 'time': '11:00', 'type': 'Occupational', 'status': 'Attended'},
-    ];
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: dummySessions.length,
-      itemBuilder: (context, idx) {
-        final s = dummySessions[idx];
-        return Card(
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          child: ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: Text('${s['type']} • ${s['date']} ${s['time']}'),
-            subtitle: Text('Status: ${s['status']}'),
-          ),
-        );
+    return FutureBuilder<String>(
+      future: _getToken(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final token = snapshot.data!;
+        return SessionsTab(child: child, token: token);
       },
     );
   }
+
+  Future<String> _getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token') ?? '';
+  }
+
 
   Widget _buildReportsTab() {
     final dummyReports = [

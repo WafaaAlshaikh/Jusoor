@@ -3,7 +3,7 @@ import 'session.dart';
 
 class Summaries {
   final int upcomingSessions;
-  final List<Session> upcomingSessionsList;
+  final List<SessionModel> upcomingSessionsList;
   final int newAIAdviceCount;
   final List<NotificationItem> notifications;
   final int newReportsCount;
@@ -22,7 +22,7 @@ class Summaries {
     return Summaries(
       upcomingSessions: json['upcomingSessions'] ?? 0,
       upcomingSessionsList: (json['recentSessions'] as List<dynamic>?)
-          ?.map((e) => Session.fromJson(e))
+          ?.map((e) => SessionModel.fromJson(e))
           .toList() ?? [],
       newReportsCount: json['newReportsCount'] ?? 0,
       newAIAdviceCount: json['newAIAdviceCount'] ?? 0,
