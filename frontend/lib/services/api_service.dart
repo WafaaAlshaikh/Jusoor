@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/child_model.dart';
+import '../models/session.dart';
+
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:5000/api/auth'; // محاكي Android يستخدم localhost
@@ -23,7 +25,6 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-
   static Future<Map<String, dynamic>> sendResetCode(String email) async {
     final response = await http.post(
       Uri.parse('http://10.0.2.2:5000/api/password/send-reset-code'),
@@ -42,8 +43,7 @@ class ApiService {
     return jsonDecode(response.body);
   }
 
-  static Future<Map<String, dynamic>> resetPassword(
-      String email, String code, String newPassword) async {
+  static Future<Map<String, dynamic>> resetPassword( String email, String code, String newPassword) async {
     final url = Uri.parse('http://10.0.2.2:5000/api/password/reset-password'); // الرابط الصحيح
     final response = await http.post(
       url,
@@ -54,9 +54,7 @@ class ApiService {
         'newPassword': newPassword,
       }),
     );
-
     print('Reset password raw response: ${response.body}');
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -66,7 +64,6 @@ class ApiService {
       };
     }
   }
-
 
   static Map<String, dynamic> _handleResponse(http.Response response) {
     try {
@@ -88,7 +85,6 @@ class ApiService {
         'Authorization': 'Bearer $token'
       },
     );
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -104,7 +100,6 @@ class ApiService {
         'Authorization': 'Bearer $token'
       },
     );
-
     if (response.statusCode == 200) {
       final Map<String, dynamic> data = jsonDecode(response.body);
       return List<dynamic>.from(data['sessions'] ?? []);
@@ -115,20 +110,39 @@ class ApiService {
 
 
 
-
-  static Future<List<Child>> getChildren(String token) async {
+  static Future<Map<String, dynamic>> getChildren({
+    required String token,
+    String? search,
+    String? gender, // اسم التشخيص أو id
+    String? diagnosis,
+    String? sort, // 'name' | 'age' | 'lastSession'
+    String? order, // 'asc' | 'desc'
+    int? page,
+    int? limit,
+  }) async {
+    final uri = Uri.parse('http://10.0.2.2:5000/api/children').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (gender != null && gender.isNotEmpty && gender != 'All') 'gender': gender,
+        if (diagnosis != null && diagnosis.isNotEmpty && diagnosis != 'All') 'diagnosis': diagnosis,
+        if (sort != null) 'sort': sort,
+        if (order != null) 'order': order,
+        if (page != null) 'page': page.toString(),
+        if (limit != null) 'limit': limit.toString(),
+      },
+    );
     final response = await http.get(
-      Uri.parse('http://10.0.2.2:5000/api/children'),
+      uri,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
     );
     if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body);
-      return data.map((c) => Child.fromJson(c)).toList();
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data; // يحتوي على { data: [...], meta: {...} }
     } else {
-      throw Exception('Failed to fetch children: ${response.statusCode}');
+      throw Exception('Failed to fetch children: ${response.statusCode} - ${response.body}');
     }
   }
 
@@ -177,12 +191,8 @@ class ApiService {
     }
   }
 
-
-
-
   // إضافة هذه الدوال لملف api_service.dart
-
-// ================= Get Diagnoses =================
+  // ================= Get Diagnoses =================
   static Future<List<Map<String, dynamic>>> getDiagnoses(String token) async {
     final response = await http.get(
       Uri.parse('http://10.0.2.2:5000/api/diagnoses'),
@@ -191,7 +201,6 @@ class ApiService {
         'Authorization': 'Bearer $token',
       },
     );
-
     if (response.statusCode == 200) {
       final List data = jsonDecode(response.body);
       return List<Map<String, dynamic>>.from(data);
@@ -200,7 +209,7 @@ class ApiService {
     }
   }
 
-// ================= Get Child Statistics =================
+  // ================= Get Child Statistics =================
   static Future<Map<String, dynamic>> getChildStatistics(String token) async {
     final response = await http.get(
       Uri.parse('http://10.0.2.2:5000/api/children/stats'),
@@ -209,7 +218,6 @@ class ApiService {
         'Authorization': 'Bearer $token',
       },
     );
-
     if (response.statusCode == 200) {
       return jsonDecode(response.body);
     } else {
@@ -217,7 +225,7 @@ class ApiService {
     }
   }
 
-// ================= Get Single Child =================
+  // ================= Get Single Child =================
   static Future<Child> getChild(String token, int childId) async {
     final response = await http.get(
       Uri.parse('http://10.0.2.2:5000/api/children/$childId'),
@@ -226,13 +234,54 @@ class ApiService {
         'Authorization': 'Bearer $token',
       },
     );
-
     if (response.statusCode == 200) {
       return Child.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to fetch child: ${response.statusCode}');
     }
   }
+
+  static Future<void> confirmSession(String token, int sessionId) async {
+    final response = await http.patch(
+      Uri.parse('http://10.0.2.2:5000/api/parent/sessions/$sessionId/confirm'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to confirm session');
+    }
+  }
+
+  static Future<void> cancelSession(String token, int sessionId) async {
+    final response = await http.patch(
+      Uri.parse('http://10.0.2.2:5000/api/parent/sessions/$sessionId/cancel'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token'
+      },
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to cancel session');
+    }
+  }
+
+  static Future<List<SessionModel>> getChildSessions(String token, int childId) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/parent/child-sessions/$childId'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      final sessions = data['sessions'] as List;
+      return sessions.map((json) => SessionModel.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load child sessions: ${response.statusCode}');
+    }
+  }
 }
-
-

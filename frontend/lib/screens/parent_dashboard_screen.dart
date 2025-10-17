@@ -8,6 +8,9 @@ import '../services/api_service.dart';
 import '../models/dashboard_data.dart';
 import 'upcoming_sessions_screen.dart';
 import 'manage_children_screen.dart';
+import 'educational_resources_screen.dart';
+import 'initial_screening_screen.dart';
+
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -282,7 +285,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             ParentSummaryCard(
               icon: Icons.calendar_month,
               title: 'Upcoming Sessions',
-              count: s?.upcomingSessions ?? 0,
+              count: dashboardData?.summaries.upcomingSessions ?? 0,
               color: ParentAppColors.primaryTeal,
               buttonText: 'View All ➜',
               onTap: () async {
@@ -370,13 +373,28 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           crossAxisSpacing: 10,
           mainAxisSpacing: 10,
           children: [
-            ParentActionButton(icon: Icons.assignment, text: 'Initial Screening', onTap: () {}),
+            ParentActionButton(
+              icon: Icons.assignment,
+              text: 'Initial Screening',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const InitialScreeningScreen()),
+                );
+              },
+            ),
             ParentActionButton(icon: Icons.school, text: 'Browse Centers', onTap: () {}),
             ParentActionButton(
-                icon: Icons.child_friendly,
-                text: 'Register Child',
-                onTap: () => Navigator.push(
-                    context, MaterialPageRoute(builder: (_) => ManageChildrenScreen()))),
+              icon: Icons.menu_book,
+              text: 'Educational Resources',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const EducationalResourcesScreen()),
+                );
+              },
+            ),
+
             ParentActionButton(icon: Icons.forum, text: 'Community', onTap: () {}),
           ],
         ),

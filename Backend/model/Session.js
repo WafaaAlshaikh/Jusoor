@@ -14,7 +14,7 @@ const Session = sequelize.define('Session', {
   duration: DataTypes.INTEGER,
   price: DataTypes.DECIMAL(10, 2),
   session_type: { type: DataTypes.ENUM('Online', 'Onsite'), defaultValue: 'Onsite' },
-  status: { type: DataTypes.ENUM('Scheduled', 'Completed', 'Cancelled'), defaultValue: 'Scheduled' }
+  status: { type: DataTypes.ENUM('Scheduled', 'Completed', 'Cancelled','Confirmed'), defaultValue: 'Scheduled' }
 });
 
 Session.belongsTo(User, { foreignKey: 'specialist_id', as: 'specialist' });
