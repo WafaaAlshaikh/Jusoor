@@ -284,4 +284,21 @@ class ApiService {
       throw Exception('Failed to load child sessions: ${response.statusCode}');
     }
   }
+
+  static Future<List<dynamic>> getParentResources(String token) async {
+    final url = Uri.parse('http://10.0.2.2:5000/api/parent/resources');
+    final response = await http.get(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token', // إذا انت مستخدم JWT
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Failed to fetch resources');
+    }
+  }
 }

@@ -17,6 +17,8 @@ const Message = require('./Message');
 const Post = require('./Post');
 const Donation = require('./Donation');
 const VacationRequest = require('./VacationRequest');
+const Resource = require('./Resource');
+const ResourceDiagnosis = require('./ResourceDiagnosis');
 
 module.exports = {
   sequelize,
@@ -36,5 +38,7 @@ module.exports = {
   Message,
   Post,
   Donation,
-  VacationRequest
+  VacationRequest,
+  Resource,
+  ResourceDiagnosis
 };
