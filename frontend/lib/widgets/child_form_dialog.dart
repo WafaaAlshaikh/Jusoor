@@ -26,6 +26,8 @@ class _ChildFormDialogState extends State<ChildFormDialog> {
   File? _pickedImage;
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _dateController = TextEditingController();
+  List<Map<String, dynamic>> _institutions = [];
+  int? _selectedInstitution;
 
   @override
   void initState() {
@@ -37,7 +39,19 @@ class _ChildFormDialogState extends State<ChildFormDialog> {
     _photo = widget.child?.photo ?? '';
     _medicalHistory = widget.child?.medicalHistory ?? '';
     _dateController.text = _dateOfBirth;
+    _loadInstitutions();
+
   }
+
+  Future<void> _loadInstitutions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+    final data = await ApiService.getInstitutions(token); // جديد
+    setState(() {
+      _institutions = data;
+    });
+  }
+
 
   Future<void> _pickImage() async {
     final picked = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
@@ -81,6 +95,7 @@ class _ChildFormDialogState extends State<ChildFormDialog> {
       age: age,
       lastSessionDate: widget.child?.lastSessionDate,
       status: widget.child?.status ?? 'Active',
+      institutionId: _selectedInstitution, // جديد
     );
 
     try {
@@ -156,6 +171,20 @@ class _ChildFormDialogState extends State<ChildFormDialog> {
                 ],
                 onChanged: (v) => setState(() => _condition = v ?? 'ASD'),
               ),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<int>(
+                value: _selectedInstitution,
+                decoration: const InputDecoration(labelText: 'Institution'),
+                items: _institutions.map((inst) {
+                  return DropdownMenuItem<int>(
+                    value: inst['institution_id'],
+                    child: Text(inst['name']),
+                  );
+                }).toList(),
+                onChanged: (v) => setState(() => _selectedInstitution = v),
+                validator: (v) => v == null ? 'Select institution' : null,
+              ),
+
               const SizedBox(height: 8),
               TextFormField(
                 initialValue: _medicalHistory,

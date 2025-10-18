@@ -301,4 +301,21 @@ class ApiService {
       throw Exception('Failed to fetch resources');
     }
   }
+
+  static Future<List<Map<String, dynamic>>> getInstitutions(String token) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5000/api/institutions'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    if (response.statusCode == 200) {
+      final List data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data);
+    } else {
+      throw Exception('Failed to fetch institutions: ${response.statusCode}');
+    }
+  }
+
 }

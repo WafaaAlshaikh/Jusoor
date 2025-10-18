@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => SignupScreen(),
         '/login': (context) => LoginScreen(),
         '/parentDashboard': (context) => ParentDashboardScreen(),
-        '/parentDashboard': (context) => ParentDashboard(),
+        // '/parentDashboard': (context) => ParentDashboard(),
         '/vacation': (context) => VacationRequestScreen(),
         '/forgotPassword': (context) => ForgotPasswordScreen(),
         '/specialistDashboard': (context) => SpecialistDashboardScreen(),

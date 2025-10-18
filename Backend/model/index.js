@@ -19,6 +19,8 @@ const Donation = require('./Donation');
 const VacationRequest = require('./VacationRequest');
 const Resource = require('./Resource');
 const ResourceDiagnosis = require('./ResourceDiagnosis');
+const ChildInstitution = require('./ChildInstitution');
+
 
 module.exports = {
   sequelize,
@@ -40,5 +42,6 @@ module.exports = {
   Donation,
   VacationRequest,
   Resource,
-  ResourceDiagnosis
+  ResourceDiagnosis,
+  ChildInstitution
 };

@@ -2,6 +2,8 @@
 const Child = require('../model/Child');
 const Diagnosis = require('../model/Diagnosis');
 const Session = require('../model/Session');
+const { ChildInstitution } = require('../model/ChildInstitution');
+const Institution = require('../model/Institution');
 const { Op } = require('sequelize');
 
 // ================= GET CHILDREN =================
@@ -203,6 +205,7 @@ exports.getChild = async (req, res) => {
   }
 };
 
+
 // ================= ADD CHILD =================
 exports.addChild = async (req, res) => {
   try {
@@ -213,73 +216,50 @@ exports.addChild = async (req, res) => {
       gender, 
       diagnosis_id, 
       photo, 
-      medical_history 
+      medical_history,
+      institution_id  // <- جديد
     } = req.body;
 
-    // التحقق من الحقول المطلوبة
-    if (!full_name || !date_of_birth || !gender) {
+    if (!full_name || !date_of_birth || !gender || !institution_id) {
       return res.status(400).json({ 
-        message: 'Full name, date of birth, and gender are required' 
+        message: 'Full name, date of birth, gender, and institution are required' 
       });
     }
 
+    // إنشاء الطفل
     const newChild = await Child.create({
       parent_id: parentId,
-      full_name: full_name,
-      date_of_birth: date_of_birth,
-      gender: gender,
+      full_name,
+      date_of_birth,
+      gender,
       diagnosis_id: diagnosis_id || null,
       photo: photo || '',
       medical_history: medical_history || ''
     });
 
-    // جلب البيانات مع الـ Diagnosis
-    const childWithDiagnosis = await Child.findByPk(newChild.child_id, {
-      include: [
-        {
-          model: Diagnosis,
-          attributes: ['name'],
-          as: 'Diagnosis'
-        }
-      ]
-    });
-
-    // حساب العمر
-    let age = 0;
-    if (childWithDiagnosis.date_of_birth) {
-      const birthDate = new Date(childWithDiagnosis.date_of_birth);
-      const today = new Date();
-      age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
+    // ربط الطفل بالمؤسسة
+    const institution = await Institution.findByPk(institution_id);
+    if (!institution) {
+      return res.status(404).json({ message: 'Institution not found' });
     }
 
-    const childResponse = {
-      id: childWithDiagnosis.child_id,
-      full_name: childWithDiagnosis.full_name,
-      date_of_birth: childWithDiagnosis.date_of_birth,
-      gender: childWithDiagnosis.gender,
-      diagnosis_id: childWithDiagnosis.diagnosis_id,
-      photo: childWithDiagnosis.photo,
-      medical_history: childWithDiagnosis.medical_history,
-      condition: childWithDiagnosis.Diagnosis ? childWithDiagnosis.Diagnosis.name : null,
-      age: age,
-      last_session_date: null,
-      status: 'Active'
-    };
+    await ChildInstitution.create({
+      child_id: newChild.child_id,
+      institution_id: institution.institution_id
+    });
 
-    res.status(201).json(childResponse);
+    res.status(201).json({ 
+      message: 'Child added successfully', 
+      child_id: newChild.child_id,
+      institution_id: institution.institution_id
+    });
 
   } catch (error) {
     console.error('Error adding child:', error);
-    res.status(500).json({ 
-      message: 'Failed to add child', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Failed to add child', error: error.message });
   }
 };
+
 
 // ================= UPDATE CHILD =================
 exports.updateChild = async (req, res) => {

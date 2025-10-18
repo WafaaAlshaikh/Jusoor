@@ -11,6 +11,7 @@ class Child {
   final int age;
   final DateTime? lastSessionDate;
   final String? status;
+  final int? institutionId; // جديد
 
   Child({
     required this.id,
@@ -24,6 +25,7 @@ class Child {
     required this.age,
     this.lastSessionDate,
     this.status,
+    this.institutionId, // جديد
   });
 
   factory Child.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,7 @@ class Child {
       age: json['age'] ?? calculatedAge,
       lastSessionDate: parsedLastSessionDate,
       status: json['status'] ?? 'Active',
+      institutionId: json['institution_id'], // جديد
     );
   }
 
@@ -72,6 +75,7 @@ class Child {
       'diagnosis_id': diagnosisId,
       'photo': photo,
       'medical_history': medicalHistory,
+      'institution_id': institutionId, // جديد
     };
   }
 }
