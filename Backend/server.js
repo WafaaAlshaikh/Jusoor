@@ -13,6 +13,7 @@ const sessionRoutes = require('./routes/sessionRoutes');
 const childRoutes = require('./routes/childRoutes');
 
 
+const path = require('path');
 
 dotenv.config();
 
@@ -39,14 +40,26 @@ app.use('/api/children', childRoutes);
 
 
 app.use('/api/specialist', specialistRoutes);
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Routes
+app.use('/api/evaluations', require('./routes/evaluations'));
+// باقي ال routes...
+app.use('/api/vacations', require('./routes/vacationRoutes'));
+
+// أنشئ مجلد uploads إذا لم يكن موجود
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads/evaluations');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 // Start server
 const startServer = async () => {
   try {
     await sequelize.authenticate();
     console.log('✅ Database connected');
 
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
     console.log('✅ All models synced with DB');
 
     const PORT = process.env.PORT || 5000;

@@ -1,7 +1,9 @@
 const Session = require('../model/Session');
 const Child = require('../model/Child');
 const User = require('../model/User');
-
+const Parent = require('../model/Parent');
+const Specialist = require('../model/Specialist');
+const Institution = require('../model/Institution');
 const { Op } = require('sequelize');
 
 // ✅ 1. عدد الجلسات القادمة
@@ -112,10 +114,48 @@ const getProfileInfo = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+const getChildrenInInstitution = async (req, res) => {
+  try {
+    const specialistId = req.user.user_id;
 
+    // 1️⃣ نجيب بيانات الأخصائي حتى نعرف لأي مؤسسة تابع
+    const specialist = await Specialist.findOne({
+      where: { specialist_id: specialistId }
+    });
+
+    if (!specialist || !specialist.institution_id) {
+      return res.status(404).json({ message: 'Specialist or institution not found' });
+    }
+
+    // 2️⃣ نجيب كل الـ child_id اللي ظهروا في جلسات داخل نفس المؤسسة
+    const sessions = await Session.findAll({
+      where: { institution_id: specialist.institution_id },
+      attributes: ['child_id'],
+      group: ['child_id']
+    });
+
+    if (!sessions.length) {
+      return res.json([]); // ما في أطفال بهالمؤسسة
+    }
+
+    const childIds = sessions.map(s => s.child_id);
+
+    // 3️⃣ نجيب بيانات الأطفال من جدول Children
+    const children = await Child.findAll({
+      where: { child_id: { [Op.in]: childIds } },
+      attributes: ['child_id', 'full_name', 'gender', 'date_of_birth', 'photo']
+    });
+
+    res.json(children);
+  } catch (err) {
+    console.error('Error in getChildrenInInstitution:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 module.exports = {
   getUpcomingSessionsCount,
   getChildrenCount,
   addSession,
-  getProfileInfo
+  getProfileInfo,
+  getChildrenInInstitution
 };

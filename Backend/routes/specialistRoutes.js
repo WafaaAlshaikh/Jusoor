@@ -4,7 +4,8 @@ const authMiddleware = require('../middleware/authMiddleware');
 const { 
   getUpcomingSessionsCount, 
   getChildrenCount, 
-  addSession 
+  addSession,
+  getChildrenInInstitution
 } = require('../controllers/specialistController');
 
 // 🔒 كل الرُتب بس للأخصائيين (تحقق من الـ role)
@@ -31,5 +32,10 @@ router.get('/me', authMiddleware, (req, res) => {
 
 // 🔹 إضافة جلسة
 router.post('/add-session', authMiddleware, specialistOnly, addSession);
-
+router.get(
+  '/institution-children',
+  authMiddleware,
+  specialistOnly,
+  getChildrenInInstitution
+);
 module.exports = router;

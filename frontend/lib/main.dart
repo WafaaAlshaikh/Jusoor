@@ -7,7 +7,7 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'screens/splash_screen.dart'; // استيراد الشاشة الافتتاحية الجديدة
 import 'screens/specialist_dashboard_screen.dart';
-
+import 'screens/full_vacation_request_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -25,6 +25,8 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => SignupScreen(),
         '/login': (context) => LoginScreen(),
         '/parentDashboard': (context) => ParentDashboardScreen(),
+        '/parentDashboard': (context) => ParentDashboard(),
+        '/vacation': (context) => VacationRequestScreen(),
         '/forgotPassword': (context) => ForgotPasswordScreen(),
         '/specialistDashboard': (context) => SpecialistDashboardScreen(),
         '/resetPassword': (context) {

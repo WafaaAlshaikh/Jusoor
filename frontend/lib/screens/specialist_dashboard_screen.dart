@@ -6,10 +6,8 @@ import 'package:frontend/screens/specialist_sessions_screen.dart';
 import 'package:frontend/screens/specialist_children_screen.dart';
 import 'package:frontend/screens/add_evaluation_screen.dart';
 import 'package:frontend/screens/full_vacation_request_screen.dart';
-// -------------------------------------------------------------------
-// Specialist Dashboard Screen (مربوط بالباك + عناصر إضافية)
-// -------------------------------------------------------------------
-
+import 'package:frontend/screens/evaluations_screen.dart'; // أضف هذا
+import 'package:frontend/screens/add_session_screen.dart'; // أضف هذا السطر
 class SpecialistDashboardScreen extends StatefulWidget {
   const SpecialistDashboardScreen({Key? key}) : super(key: key);
 
@@ -70,6 +68,7 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: _buildAppBar(),
+      drawer: _buildDrawer(), // أضف الـ Drawer هنا
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -89,15 +88,290 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
     );
   }
 
+  // دالة بناء الـ Drawer
+  Widget _buildDrawer() {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.75, // عرض 75% من الشاشة
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            // Header مع معلومات المستخدم
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.only(top: 60, bottom: 20, left: 20, right: 20),
+              color: AppColors.primary.withOpacity(0.1),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 35,
+                    backgroundImage: dashboardData['avatar'] != null
+                        ? NetworkImage(dashboardData['avatar'])
+                        : null,
+                    backgroundColor: AppColors.primary.withOpacity(0.2),
+                    child: dashboardData['avatar'] == null
+                        ? Icon(
+                      Icons.person,
+                      size: 40,
+                      color: AppColors.primary,
+                    )
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    dashboardData['name'] ?? 'Specialist',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Speech Therapist',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textDark.withOpacity(0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.star, color: Colors.amber, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '4.8 (124 reviews)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textDark.withOpacity(0.7),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // قائمة الـ Drawer Items
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _buildDrawerItem(
+                    icon: Icons.dashboard,
+                    title: 'Dashboard',
+                    onTap: () {
+                      Navigator.pop(context); // إغلاق الـ Drawer
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.assessment,
+                    title: 'Evaluations',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EvaluationsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.calendar_today,
+                    title: 'Sessions',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SpecialistSessionsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.people,
+                    title: 'My Children',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SpecialistChildrenScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.chat,
+                    title: 'Messages',
+                    badgeCount: unreadMessagesCount,
+                    onTap: () {
+                      // TODO: Navigate to Messages Screen
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.article,
+                    title: 'Reports',
+                    onTap: () {
+                      // TODO: Navigate to Reports Screen
+                      Navigator.pop(context);
+                    },
+                  ),
+
+                  // Divider بين الأقسام
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    child: Divider(height: 1),
+                  ),
+
+                  // قسم الإعدادات
+                  _buildDrawerItem(
+                    icon: Icons.settings,
+                    title: 'Settings',
+                    onTap: () {
+                      // TODO: Navigate to Settings Screen
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.help,
+                    title: 'Help & Support',
+                    onTap: () {
+                      // TODO: Navigate to Help Screen
+                      Navigator.pop(context);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.info,
+                    title: 'About',
+                    onTap: () {
+                      // TODO: Navigate to About Screen
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
+            ),
+
+            // زر Logout في الأسفل
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: _buildDrawerItem(
+                icon: Icons.logout,
+                title: 'Logout',
+                color: Colors.red,
+                onTap: () {
+                  _showLogoutDialog();
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // دالة لبناء عنصر في الـ Drawer
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? color,
+    int? badgeCount,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        color: color ?? AppColors.primary,
+        size: 22,
+
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          color: color ?? AppColors.textDark,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: badgeCount != null && badgeCount > 0
+          ? Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          badgeCount.toString(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      )
+          : null,
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+    );
+  }
+
+  // دالة لعرض dialog التأكيد عند Logout
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // إغلاق الـ Dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // TODO: تنفيذ عملية الـ Logout
+                Navigator.pop(context); // إغلاق الـ Dialog
+                Navigator.pop(context); // إغلاق الـ Drawer
+                // إضافة منطق الـ Logout هنا
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // باقي الدوال كما هي بدون تغيير...
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: AppColors.primary,
       elevation: 0,
+      leading: Builder(
+        builder: (context) => IconButton(
+          icon: Icon(
+            Icons.menu,
+            color: Colors.white, // أبيض
+            size: 28,
+          ),
+          onPressed: () => Scaffold.of(context).openDrawer(),
+        ),
+      ),
       title: Text(
         dashboardData['name'] ?? 'Specialist Dashboard',
         style: const TextStyle(
-          color: AppColors.textName,
-          // fontWeight: FontWeight.bold,
+          color: AppColors.background,
           fontSize: 21,
         ),
       ),
@@ -120,29 +394,7 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
               ),
           ],
         ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 9.0),
-          child: CircleAvatar(
-            backgroundImage: dashboardData['avatar'] != null
-                ? NetworkImage(dashboardData['avatar'])
-                : null,
-            backgroundColor: AppColors.textName.withOpacity(0.9),
-            child: dashboardData['avatar'] == null
-                ? Text(
-              (dashboardData['name'] != null && dashboardData['name'].isNotEmpty)
-                  ? dashboardData['name'][0].toUpperCase()
-                  : '?',
-              style: const TextStyle(
-                color: AppColors.primary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            )
-                : null,
-
-
-          ),
-        ),
+        // أزل زر الـ Avatar من الـ AppBar لأنه موجود في الـ Drawer
       ],
     );
   }
@@ -150,7 +402,6 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
   Widget _buildSummaryCards() {
     return SizedBox(
       height: 200,
-
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
@@ -206,7 +457,6 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
               count: 0,
               buttonText: 'View Details ➔',
               onTap: () {},
-
             ),
           ),
         ],
@@ -231,7 +481,14 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
             _QuickActionButton(
               icon: Icons.add_circle_outline,
               text: 'Add Session',
-              onTap: () {},
+              onTap: () {  Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddSessionScreen(),
+                ),
+              );
+                },
+
             ),
             _QuickActionButton(
               icon: Icons.edit_note,
@@ -240,7 +497,7 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>AddEvaluationScreen(),
+                    builder: (context) => AddEvaluationScreen(),
                   ),
                 );
               },
@@ -257,13 +514,10 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>VacationRequestScreen(),
+                    builder: (context) => VacationRequestScreen(),
                   ),
                 );
               },
-
-
-
             ),
           ],
         ),
@@ -327,22 +581,45 @@ class _SpecialistDashboardScreenState extends State<SpecialistDashboardScreen> {
         BottomNavigationBarItem(icon: Icon(Icons.calendar_month), label: 'Sessions'),
         BottomNavigationBarItem(icon: Icon(Icons.group), label: 'My Children'),
         BottomNavigationBarItem(icon: Icon(Icons.mail), label: 'Messages'),
-        BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        // أزل More من الـ Bottom Navigation
       ],
       currentIndex: 0,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.textGray,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
-      onTap: (index) {},
+      onTap: (index) {
+        // إضافة التنقل بين الشاشات
+        switch (index) {
+          case 0:
+          // Already on dashboard
+            break;
+          case 1:
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SpecialistSessionsScreen(),
+              ),
+            );
+            break;
+          case 2:
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SpecialistChildrenScreen(),
+              ),
+            );
+            break;
+          case 3:
+          // TODO: Navigate to Messages
+            break;
+        }
+      },
     );
   }
 }
 
-// -------------------------------------------------------------------
-// Custom Widgets
-// -------------------------------------------------------------------
-
+// باقي الـ Custom Widgets كما هي بدون تغيير...
 class _SummaryCard extends StatelessWidget {
   final IconData icon;
   final String title;
