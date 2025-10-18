@@ -11,6 +11,7 @@ const parentRoutes = require('./routes/parentRoutes');
 const specialistRoutes = require('./routes/specialistRoutes');
 const sessionRoutes = require('./routes/sessionRoutes');
 const childRoutes = require('./routes/childRoutes');
+const resourceRoutes = require('./routes/resourceRoutes');
 
 
 
@@ -34,6 +35,8 @@ app.use('/api/password', forgotPasswordRoutes);
 app.use('/api/parent', parentRoutes);
 app.use('/api/parent', sessionRoutes);
 app.use('/api/children', childRoutes);
+app.use('/api', resourceRoutes);
+
 
 
 
