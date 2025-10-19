@@ -1,3 +1,4 @@
+
 const sequelize = require('../config/db');
 
 const User = require('./User');
@@ -9,18 +10,23 @@ const Institution = require('./Institution');
 const Session = require('./Session');
 const Payment = require('./Payment');
 const Evaluation = require('./Evaluation');
-const AI_Parent_Interaction = require('./AIParentInteraction');
-const AI_Donor_Report = require('./AIDonorReport');
-const AI_Specialist_Insight = require('./AISpecialistInsight');
-const AI_Recommendation = require('./AIRecommendation');
+const EvaluationAttachment = require('./EvaluationAttachment');
+const SessionType = require('./SessionType');
+const SpecialistSchedule = require('./SpecialistSchedule');
+const ChildRegistrationRequest = require('./ChildRegistrationRequest');
+const SpecialistRegistrationRequest = require('./SpecialistRegistrationRequest');
+const VacationRequest = require('./VacationRequest');
+
+// العلاقات الإضافية
+const AIDonorReport = require('./AIDonorReport');
+const AIParentInteraction = require('./AIParentInteraction');
+const AIRecommendation = require('./AIRecommendation');
+const AISpecialistInsight = require('./AISpecialistInsight');
 const Message = require('./Message');
 const Post = require('./Post');
 const Donation = require('./Donation');
-const VacationRequest = require('./VacationRequest');
 const Resource = require('./Resource');
 const ResourceDiagnosis = require('./ResourceDiagnosis');
-const ChildInstitution = require('./ChildInstitution');
-
 
 module.exports = {
   sequelize,
@@ -33,15 +39,19 @@ module.exports = {
   Session,
   Payment,
   Evaluation,
-  AI_Parent_Interaction,
-  AI_Donor_Report,
-  AI_Specialist_Insight,
-  AI_Recommendation,
+  EvaluationAttachment,
+  SessionType,
+  SpecialistSchedule,
+  ChildRegistrationRequest,
+  SpecialistRegistrationRequest,
+  VacationRequest,
+  AIDonorReport,
+  AIParentInteraction,
+  AIRecommendation,
+  AISpecialistInsight,
   Message,
   Post,
   Donation,
-  VacationRequest,
   Resource,
-  ResourceDiagnosis,
-  ChildInstitution
+  ResourceDiagnosis
 };

@@ -1,5 +1,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
+const Child = require('./Child');
+const Specialist = require('./Specialist');
 
 const Evaluation = sequelize.define('Evaluation', {
   evaluation_id: { 
@@ -9,23 +11,11 @@ const Evaluation = sequelize.define('Evaluation', {
   },
   child_id: { 
     type: DataTypes.BIGINT.UNSIGNED, 
-    allowNull: false,
-    references: {
-      model: 'Children', // غير لـ Children (بالجمع)
-      key: 'child_id'
-    },
-    onUpdate: 'CASCADE',
-    onDelete: 'RESTRICT'
+    allowNull: false
   },
   specialist_id: { 
     type: DataTypes.BIGINT.UNSIGNED, 
-    allowNull: false,
-    references: {
-      model: 'Specialists', // غير لـ Specialists (بالجمع)
-      key: 'specialist_id'
-    },
-    onUpdate: 'CASCADE',
-    onDelete: 'RESTRICT'
+    allowNull: false
   },
   evaluation_type: { 
     type: DataTypes.ENUM('Initial', 'Mid', 'Final', 'Follow-up'), 
@@ -52,16 +42,8 @@ const Evaluation = sequelize.define('Evaluation', {
   timestamps: false
 });
 
-// أو أزل العلاقات من التعريف وخلها في associate فقط
-Evaluation.associate = function(models) {
-  Evaluation.belongsTo(models.Child, { 
-    foreignKey: 'child_id',
-    targetKey: 'child_id'
-  });
-  Evaluation.belongsTo(models.Specialist, { 
-    foreignKey: 'specialist_id',
-    targetKey: 'specialist_id'
-  });
-};
+Evaluation.belongsTo(Child, { foreignKey: 'child_id' });
+Evaluation.belongsTo(Specialist, { foreignKey: 'specialist_id' });
 
 module.exports = Evaluation;
+

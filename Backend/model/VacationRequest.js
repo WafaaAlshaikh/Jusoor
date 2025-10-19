@@ -15,9 +15,10 @@ const VacationRequest = sequelize.define('VacationRequest', {
     type: DataTypes.ENUM('Pending', 'Approved', 'Rejected'),
     defaultValue: 'Pending'
   }
-});
+}, { tableName: 'VacationRequests', timestamps: false });
 
 VacationRequest.belongsTo(Specialist, { foreignKey: 'specialist_id', as: 'specialist' });
 VacationRequest.belongsTo(Institution, { foreignKey: 'institution_id', as: 'institution' });
 
 module.exports = VacationRequest;
+

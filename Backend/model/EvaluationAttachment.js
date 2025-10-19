@@ -1,3 +1,7 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
+const Evaluation = require('./Evaluation');
+
 const EvaluationAttachment = sequelize.define('EvaluationAttachment', {
   attachment_id: {
     type: DataTypes.INTEGER,
@@ -21,7 +25,9 @@ const EvaluationAttachment = sequelize.define('EvaluationAttachment', {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
   }
-});
+}, { tableName: 'EvaluationAttachments', timestamps: false });
 
 EvaluationAttachment.belongsTo(Evaluation, { foreignKey: 'evaluation_id' });
 Evaluation.hasMany(EvaluationAttachment, { foreignKey: 'evaluation_id' });
+
+module.exports = EvaluationAttachment;

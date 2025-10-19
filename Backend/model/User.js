@@ -61,9 +61,7 @@ const User = sequelize.define('User', {
     timestamps: false
 });
 
-// العلاقة بين المؤسسة والمستخدمين
 User.belongsTo(Institution, { foreignKey: 'institution_id', as: 'institution' });
-Institution.hasMany(User, { foreignKey: 'institution_id', as: 'users' });
-
 
 module.exports = User;
+
