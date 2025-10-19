@@ -2,8 +2,8 @@
 const Child = require('../model/Child');
 const Diagnosis = require('../model/Diagnosis');
 const Session = require('../model/Session');
-const { ChildInstitution } = require('../model/ChildInstitution');
 const Institution = require('../model/Institution');
+const ChildRegistrationRequest = require('../model/ChildRegistrationRequest');
 const { Op } = require('sequelize');
 
 // ================= GET CHILDREN =================
@@ -25,7 +25,7 @@ exports.getChildren = async (req, res) => {
     const pageLimit = Math.max(1, parseInt(limit, 10) || 50);
     const offset = (pageNum - 1) * pageLimit;
 
-    const where = { parent_id: parentId };
+    const where = { parent_id: parentId, deleted_at: null };
 
     if (search && search.trim() !== '') {
       where.full_name = { [Op.like]: `%${search.trim()}%` };
@@ -43,34 +43,30 @@ exports.getChildren = async (req, res) => {
       }
     }
 
-   // تعديل جزء الفلترة
-let include = [
+   let include = [
   {
     model: Diagnosis,
     attributes: ['name'],
     as: 'Diagnosis',
-    required: false // false يعني رح يظهر حتى لو ما عنده diagnosis
+    required: false
   }
 ];
 
 if (diagnosis && diagnosis !== 'All') {
-  // إذا diagnosis اسم وليس رقم
   if (isNaN(parseInt(diagnosis, 10))) {
     include = [
       {
         model: Diagnosis,
         attributes: ['name'],
         as: 'Diagnosis',
-        required: true, // مهم لتطبيق فلتر على الاسم
-        where: { name: diagnosis } // هنا فلترة الاسم
+        required: true,
+        where: { name: diagnosis }
       }
     ];
   } else {
-    // فلترة بالـ diagnosis_id موجودة عندك
     where.diagnosis_id = parseInt(diagnosis, 10);
   }
 }
-
 
     let orderArray = [];
     if (sort === 'age') {
@@ -120,7 +116,8 @@ if (diagnosis && diagnosis !== 'All') {
         condition: childData.Diagnosis ? childData.Diagnosis.name : null,
         age: age,
         last_session_date: lastSession ? lastSession.date : null,
-        status: 'Active'
+        status: 'Active',
+        registration_status: childData.registration_status || 'Not Registered'
       };
     }));
 
@@ -139,7 +136,6 @@ if (diagnosis && diagnosis !== 'All') {
   }
 };
 
-
 // ================= GET SINGLE CHILD =================
 exports.getChild = async (req, res) => {
   try {
@@ -149,7 +145,8 @@ exports.getChild = async (req, res) => {
     const child = await Child.findOne({
       where: { 
         child_id: childId,
-        parent_id: parentId 
+        parent_id: parentId,
+        deleted_at: null 
       },
       include: [
         {
@@ -164,7 +161,6 @@ exports.getChild = async (req, res) => {
       return res.status(404).json({ message: 'Child not found' });
     }
 
-    // حساب العمر
     let age = 0;
     if (child.date_of_birth) {
       const birthDate = new Date(child.date_of_birth);
@@ -176,7 +172,6 @@ exports.getChild = async (req, res) => {
       }
     }
 
-    // جلب آخر جلسة
     const lastSession = await Session.findOne({
       where: { child_id: childId },
       order: [['date', 'DESC']],
@@ -194,7 +189,9 @@ exports.getChild = async (req, res) => {
       condition: child.Diagnosis ? child.Diagnosis.name : null,
       age: age,
       last_session_date: lastSession ? lastSession.date : null,
-      status: 'Active'
+      status: 'Active',
+      registration_status: child.registration_status || 'Not Registered',
+      current_institution_id: child.current_institution_id
     };
 
     res.status(200).json(childData);
@@ -204,7 +201,6 @@ exports.getChild = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 // ================= ADD CHILD =================
 exports.addChild = async (req, res) => {
@@ -217,16 +213,16 @@ exports.addChild = async (req, res) => {
       diagnosis_id, 
       photo, 
       medical_history,
-      institution_id  // <- جديد
+      institution_id
     } = req.body;
 
-    if (!full_name || !date_of_birth || !gender || !institution_id) {
+    if (!full_name || !date_of_birth || !gender) {
       return res.status(400).json({ 
-        message: 'Full name, date of birth, gender, and institution are required' 
+        message: 'Full name, date of birth, and gender are required' 
       });
     }
 
-    // إنشاء الطفل
+    // إنشاء الطفل الأساسي
     const newChild = await Child.create({
       parent_id: parentId,
       full_name,
@@ -234,32 +230,165 @@ exports.addChild = async (req, res) => {
       gender,
       diagnosis_id: diagnosis_id || null,
       photo: photo || '',
-      medical_history: medical_history || ''
+      medical_history: medical_history || '',
+      registration_status: 'Not Registered',
+      current_institution_id: null
     });
 
-    // ربط الطفل بالمؤسسة
-    const institution = await Institution.findByPk(institution_id);
-    if (!institution) {
-      return res.status(404).json({ message: 'Institution not found' });
+    let registrationRequested = false;
+
+    // إذا أرسل institution_id، ننشئ طلب انضمام
+    if (institution_id) {
+      try {
+        await ChildRegistrationRequest.create({
+          child_id: newChild.child_id,
+          institution_id: institution_id,
+          requested_by_parent_id: parentId,
+          status: 'Pending'
+        });
+
+        await newChild.update({ registration_status: 'Pending' });
+        registrationRequested = true;
+        
+      } catch (importError) {
+        console.log('Note: ChildRegistrationRequest creation failed, but child was created');
+        // نكمل بدون طلب الانضمام
+      }
     }
-
-    await ChildInstitution.create({
-      child_id: newChild.child_id,
-      institution_id: institution.institution_id
-    });
 
     res.status(201).json({ 
       message: 'Child added successfully', 
       child_id: newChild.child_id,
-      institution_id: institution.institution_id
+      ...(registrationRequested && { registration_requested: true })
     });
 
   } catch (error) {
     console.error('Error adding child:', error);
-    res.status(500).json({ message: 'Failed to add child', error: error.message });
+    res.status(500).json({ 
+      message: 'Failed to add child', 
+      error: error.message 
+    });
   }
 };
 
+// ================= REQUEST INSTITUTION REGISTRATION =================
+exports.requestInstitutionRegistration = async (req, res) => {
+  try {
+    const parentId = req.user.user_id;
+    const { child_id, institution_id } = req.body;
+
+    const child = await Child.findOne({
+      where: { child_id, parent_id: parentId }
+    });
+
+    if (!child) {
+      return res.status(404).json({ message: 'Child not found' });
+    }
+
+    const existingRequest = await ChildRegistrationRequest.findOne({
+      where: { 
+        child_id, 
+        status: 'Pending' 
+      }
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({ 
+        message: 'Child already has a pending registration request' 
+      });
+    }
+
+    await ChildRegistrationRequest.create({
+      child_id,
+      institution_id,
+      requested_by_parent_id: parentId,
+      status: 'Pending'
+    });
+
+    await child.update({ registration_status: 'Pending' });
+
+    res.status(201).json({ 
+      message: 'Registration request submitted successfully',
+      status: 'Pending'
+    });
+
+  } catch (error) {
+    console.error('Error requesting registration:', error);
+    res.status(500).json({ 
+      message: 'Failed to submit registration request', 
+      error: error.message 
+    });
+  }
+};
+
+// ================= GET REGISTRATION STATUS =================
+exports.getRegistrationStatus = async (req, res) => {
+  try {
+    const parentId = req.user.user_id;
+    const { id } = req.params; // ⬅️ استخدم id من الـ URL
+
+    console.log('Fetching registration status for child:', id);
+
+    // الحل البديل: جلب البيانات بشكل منفصل
+    const child = await Child.findOne({
+      where: { 
+        child_id: id, 
+        parent_id: parentId,
+        deleted_at: null 
+      },
+      attributes: ['child_id', 'full_name', 'registration_status', 'current_institution_id']
+    });
+
+    if (!child) {
+      return res.status(404).json({ message: 'Child not found' });
+    }
+
+    // جلب طلبات الانضمام بشكل منفصل
+    const registrationRequests = await ChildRegistrationRequest.findAll({
+      where: { child_id: id },
+      include: [
+        {
+          model: Institution,
+          attributes: ['name', 'institution_id']
+        },
+        {
+          model: require('../model/User'),
+          as: 'assignedManager',
+          attributes: ['full_name']
+        }
+      ],
+      order: [['requested_at', 'DESC']]
+    });
+
+    const response = {
+      child_id: child.child_id,
+      child_name: child.full_name,
+      registration_status: child.registration_status,
+      current_institution: child.current_institution_id ? {
+        institution_id: child.current_institution_id,
+      } : null,
+      registration_requests: registrationRequests.map(req => ({
+        request_id: req.request_id,
+        institution_id: req.institution_id,
+        institution_name: req.Institution ? req.Institution.name : 'Unknown',
+        status: req.status,
+        requested_at: req.requested_at,
+        reviewed_at: req.reviewed_at,
+        notes: req.notes,
+        assigned_manager: req.assignedManager ? req.assignedManager.full_name : null
+      }))
+    };
+
+    res.status(200).json(response);
+
+  } catch (error) {
+    console.error('Error fetching registration status:', error);
+    res.status(500).json({ 
+      message: 'Failed to fetch registration status', 
+      error: error.message 
+    });
+  }
+};
 
 // ================= UPDATE CHILD =================
 exports.updateChild = async (req, res) => {
@@ -275,7 +404,6 @@ exports.updateChild = async (req, res) => {
       medical_history 
     } = req.body;
 
-    // التحقق من ملكية الطفل
     const child = await Child.findOne({
       where: { 
         child_id: childId,
@@ -287,7 +415,6 @@ exports.updateChild = async (req, res) => {
       return res.status(404).json({ message: 'Child not found' });
     }
 
-    // تحديث البيانات
     await child.update({
       full_name: full_name,
       date_of_birth: date_of_birth,
@@ -297,7 +424,6 @@ exports.updateChild = async (req, res) => {
       medical_history: medical_history || child.medical_history
     });
 
-    // جلب البيانات المحدثة مع الـ Diagnosis
     const updatedChild = await Child.findByPk(childId, {
       include: [
         {
@@ -308,7 +434,6 @@ exports.updateChild = async (req, res) => {
       ]
     });
 
-    // حساب العمر
     let age = 0;
     if (updatedChild.date_of_birth) {
       const birthDate = new Date(updatedChild.date_of_birth);
@@ -331,7 +456,8 @@ exports.updateChild = async (req, res) => {
       condition: updatedChild.Diagnosis ? updatedChild.Diagnosis.name : null,
       age: age,
       last_session_date: null,
-      status: 'Active'
+      status: 'Active',
+      registration_status: updatedChild.registration_status || 'Not Registered'
     };
 
     res.status(200).json(childResponse);
@@ -346,6 +472,7 @@ exports.updateChild = async (req, res) => {
 };
 
 // ================= DELETE CHILD =================
+// ================= SOFT DELETE CHILD =================
 exports.deleteChild = async (req, res) => {
   try {
     const childId = req.params.id;
@@ -354,25 +481,30 @@ exports.deleteChild = async (req, res) => {
     const child = await Child.findOne({
       where: { 
         child_id: childId,
-        parent_id: parentId 
+        parent_id: parentId,
+        deleted_at: null // ⬅️ تأكد إنه مش محذوف already
       }
     });
 
     if (!child) {
-      return res.status(404).json({ message: 'Child not found' });
+      return res.status(404).json({ message: 'Child not found or already deleted' });
     }
 
-    await child.destroy();
-    
+    // Soft Delete - تحديث حقل deleted_at
+    await child.update({
+      deleted_at: new Date(),
+      registration_status: 'Archived' // ⬅️ غير الحالة
+    });
+
     res.status(200).json({ 
-      message: 'Child deleted successfully',
-      deletedChildId: childId
+      message: 'Child archived successfully',
+      child_id: childId
     });
 
   } catch (error) {
-    console.error('Error deleting child:', error);
+    console.error('Error archiving child:', error);
     res.status(500).json({ 
-      message: 'Failed to delete child', 
+      message: 'Failed to archive child', 
       error: error.message 
     });
   }
@@ -384,7 +516,7 @@ exports.getChildStatistics = async (req, res) => {
     const parentId = req.user.user_id;
 
     const children = await Child.findAll({
-      where: { parent_id: parentId },
+      where: { parent_id: parentId, deleted_at: null },
       include: [
         {
           model: Diagnosis,
@@ -401,18 +533,24 @@ exports.getChildStatistics = async (req, res) => {
         Male: 0,
         Female: 0
       },
+      byRegistrationStatus: {
+        'Not Registered': 0,
+        'Pending': 0,
+        'Approved': 0
+      },
       activeChildren: children.length
     };
 
     children.forEach(child => {
-      // إحصائيات حسب الحالة
       const condition = child.Diagnosis ? child.Diagnosis.name : 'Not Diagnosed';
       statistics.byCondition[condition] = (statistics.byCondition[condition] || 0) + 1;
 
-      // إحصائيات حسب الجنس
       if (child.gender) {
         statistics.byGender[child.gender] = (statistics.byGender[child.gender] || 0) + 1;
       }
+
+      const regStatus = child.registration_status || 'Not Registered';
+      statistics.byRegistrationStatus[regStatus] = (statistics.byRegistrationStatus[regStatus] || 0) + 1;
     });
 
     res.status(200).json(statistics);

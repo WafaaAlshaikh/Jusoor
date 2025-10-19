@@ -1,4 +1,3 @@
-// lib/models/child_model.dart - الإصدار المكتمل
 class Child {
   final int id;
   final String fullName;
@@ -11,7 +10,12 @@ class Child {
   final int age;
   final DateTime? lastSessionDate;
   final String? status;
-  final int? institutionId; // جديد
+  final int? institutionId;
+  final DateTime? deletedAt; // ⬅️ جديد
+  final bool isArchived; // ⬅️ جديد
+  final String registrationStatus; // 'Not Registered', 'Pending', 'Approved'
+  final int? currentInstitutionId;
+  final String? currentInstitutionName;
 
   Child({
     required this.id,
@@ -25,7 +29,14 @@ class Child {
     required this.age,
     this.lastSessionDate,
     this.status,
-    this.institutionId, // جديد
+    this.institutionId,
+
+    // ⬇️⬇️⬇️ الحقول الجديدة ⬇️⬇️⬇️
+    required this.registrationStatus,
+    this.currentInstitutionId,
+    this.currentInstitutionName,
+    this.deletedAt,
+    required this.isArchived,
   });
 
   factory Child.fromJson(Map<String, dynamic> json) {
@@ -36,7 +47,7 @@ class Child {
         final birthDate = DateTime.parse(json['date_of_birth']);
         final today = DateTime.now();
         calculatedAge = today.year - birthDate.year;
-        if (today.month < birthDate.month || 
+        if (today.month < birthDate.month ||
             (today.month == birthDate.month && today.day < birthDate.day)) {
           calculatedAge--;
         }
@@ -51,6 +62,11 @@ class Child {
       parsedLastSessionDate = DateTime.tryParse(json['last_session_date']);
     }
 
+    DateTime? parsedDeletedAt;
+    if (json['deleted_at'] != null && json['deleted_at'].isNotEmpty) {
+      parsedDeletedAt = DateTime.tryParse(json['deleted_at']);
+    }
+
     return Child(
       id: json['id'] ?? json['child_id'] ?? 0,
       fullName: json['full_name'] ?? '',
@@ -63,7 +79,14 @@ class Child {
       age: json['age'] ?? calculatedAge,
       lastSessionDate: parsedLastSessionDate,
       status: json['status'] ?? 'Active',
-      institutionId: json['institution_id'], // جديد
+      institutionId: json['institution_id'],
+
+      // ⬇️⬇️⬇️ الحقول الجديدة ⬇️⬇️⬇️
+      registrationStatus: json['registration_status'] ?? 'Not Registered',
+      currentInstitutionId: json['current_institution_id'],
+      currentInstitutionName: json['current_institution_name'],
+      deletedAt: parsedDeletedAt,
+      isArchived: parsedDeletedAt != null,
     );
   }
 
@@ -75,7 +98,7 @@ class Child {
       'diagnosis_id': diagnosisId,
       'photo': photo,
       'medical_history': medicalHistory,
-      'institution_id': institutionId, // جديد
+      'institution_id': institutionId,
     };
   }
 }

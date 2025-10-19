@@ -14,7 +14,8 @@ const Child = sequelize.define('Child', {
   photo: { type: DataTypes.STRING(255) },
   medical_history: { type: DataTypes.TEXT },
   current_institution_id: { type: DataTypes.BIGINT.UNSIGNED },
-  registration_status: { type: DataTypes.ENUM('Pending', 'Approved', 'Not Registered'), defaultValue: 'Not Registered' }
+  registration_status: { type: DataTypes.ENUM('Pending', 'Approved', 'Not Registered','Archived'), defaultValue: 'Not Registered' },
+  deleted_at: { type: DataTypes.DATE, allowNull: true }
 }, { tableName: 'Children', timestamps: false });
 
 Child.belongsTo(Parent, { foreignKey: 'parent_id' });

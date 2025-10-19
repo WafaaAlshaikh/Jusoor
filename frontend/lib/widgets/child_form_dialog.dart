@@ -95,7 +95,12 @@ class _ChildFormDialogState extends State<ChildFormDialog> {
       age: age,
       lastSessionDate: widget.child?.lastSessionDate,
       status: widget.child?.status ?? 'Active',
-      institutionId: _selectedInstitution, // جديد
+      institutionId: _selectedInstitution,
+      registrationStatus: widget.child?.registrationStatus ?? 'Not Registered',
+      currentInstitutionId: widget.child?.currentInstitutionId,
+      currentInstitutionName: widget.child?.currentInstitutionName,
+      deletedAt: widget.child?.deletedAt,
+      isArchived: widget.child?.isArchived ?? false, // ⬅️ أضف هذا
     );
 
     try {
@@ -108,12 +113,11 @@ class _ChildFormDialogState extends State<ChildFormDialog> {
         await ApiService.updateChild(token, widget.child!.id, newChild);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Child updated')));
       }
-      Navigator.pop(context, true); // إشارة أن هناك تغيير
+      Navigator.pop(context, true);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save failed: $e')));
     }
   }
-
   Future<void> _pickDate() async {
     DateTime initial = DateTime.tryParse(_dateController.text) ?? DateTime.now();
     final picked = await showDatePicker(context: context, initialDate: initial, firstDate: DateTime(1950), lastDate: DateTime.now());
