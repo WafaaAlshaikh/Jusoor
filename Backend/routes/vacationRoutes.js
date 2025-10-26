@@ -14,4 +14,6 @@ router.delete('/:id', auth, vacationController.deleteVacation);
 router.get('/institution/all', auth, vacationController.getInstitutionVacations);
 router.put('/institution/:id', auth, vacationController.updateVacationStatus);
 router.get('/unavailable', auth, vacationController.getUnavailableDates);
+// في ملف routes/vacationRoutes.js
+router.get('/manager/notifications', auth, vacationController.getManagerVacationNotifications);
 module.exports = router;

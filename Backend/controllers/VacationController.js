@@ -4,30 +4,23 @@ const VacationRequest = require('../model/VacationRequest');
 const Session = require('../model/Session');
 const Specialist = require('../model/Specialist');
 const User = require('../model/User');
-
+const Notification = require('../model/Notification');
 // ✅ إنشاء طلب إجازة جديد
 exports.createVacation = async (req, res) => {
   try {
     const { start_date, end_date, reason } = req.body;
-    const specialist_id = req.user.user_id; // من التوكن
+    const specialist_id = req.user.user_id;
 
     // تحقق من صلاحية المستخدم
-    const specialist = await Specialist.findOne({ where: { specialist_id } });
+    const specialist = await Specialist.findOne({ 
+      where: { specialist_id },
+      include: [{ model: User, as: 'User' }] // ⭐ تضمين بيانات المستخدم
+    });
     if (!specialist) return res.status(403).json({ message: 'Not a specialist' });
 
     // لا يسمح بتاريخ ماضي
     const today = new Date().toISOString().split('T')[0];
     if (start_date < today) return res.status(400).json({ message: 'Start date cannot be in the past' });
-
-    // تحقق من تداخل الإجازة مع أي جلسة
-    const conflict = await Session.findOne({
-      where: {
-        specialist_id,
-        date: { [Op.between]: [start_date, end_date] },
-        status: 'Scheduled'
-      }
-    });
-    if (conflict) return res.status(400).json({ message: 'Vacation overlaps with a scheduled session' });
 
     const vacation = await VacationRequest.create({
       specialist_id,
@@ -37,7 +30,31 @@ exports.createVacation = async (req, res) => {
       reason
     });
 
-    res.status(201).json({ message: 'Vacation request created', vacation });
+    // ⭐ البحث عن المدير في نفس المؤسسة
+    const manager = await User.findOne({
+      where: { 
+        institution_id: specialist.institution_id,
+        role: 'Manager'
+      }
+    });
+
+    // ⭐ إرسال إشعار للمدير إذا وجد
+    if (manager) {
+      await Notification.create({
+        user_id: manager.user_id,
+        title: 'New Vacation Request',
+        message: `${specialist.User.full_name} has requested vacation from ${start_date} to ${end_date}. ${reason ? `Reason: ${reason}` : ''}`,
+        type: 'vacation_request',
+        related_id: vacation.request_id,
+        is_read: false
+      });
+    }
+
+    res.status(201).json({ 
+      message: 'Vacation request created', 
+      vacation,
+      notification_sent: !!manager // ⭐ إرجاع حالة الإشعار
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
@@ -76,15 +93,7 @@ exports.updateVacation = async (req, res) => {
     const today = new Date().toISOString().split('T')[0];
     if (start_date < today) return res.status(400).json({ message: 'Start date cannot be in the past' });
 
-    const conflict = await Session.findOne({
-      where: {
-        specialist_id,
-        date: { [Op.between]: [start_date, end_date] },
-        status: 'Scheduled'
-      }
-    });
-    if (conflict) return res.status(400).json({ message: 'Vacation overlaps with a scheduled session' });
-
+    
     vacation.start_date = start_date;
     vacation.end_date = end_date;
     vacation.reason = reason;
@@ -97,7 +106,8 @@ exports.updateVacation = async (req, res) => {
   }
 };
 
-// ✅ حذف طلب إجازة (فقط إذا Pending)
+
+// ✅ حذف طلب إجازة (فقط إذا Pending) مع حذف الإشعار
 exports.deleteVacation = async (req, res) => {
   try {
     const { id } = req.params;
@@ -106,6 +116,14 @@ exports.deleteVacation = async (req, res) => {
     const vacation = await VacationRequest.findOne({ where: { request_id: id, specialist_id } });
     if (!vacation) return res.status(404).json({ message: 'Vacation not found' });
     if (vacation.status !== 'Pending') return res.status(400).json({ message: 'Cannot delete an approved or rejected vacation' });
+
+    // ⭐ حذف الإشعار المرتبط بهذا الطلب
+    await Notification.destroy({
+      where: { 
+        related_id: id,
+        type: 'vacation_request'
+      }
+    });
 
     await vacation.destroy();
     res.status(200).json({ message: 'Vacation deleted successfully' });
@@ -162,7 +180,33 @@ exports.getUnavailableDates = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+// ✅ جلب طلبات الإجازة مع الإشعارات للمدير
+exports.getManagerVacationNotifications = async (req, res) => {
+  try {
+    const manager = await User.findByPk(req.user.user_id);
+    if (manager.role !== 'Manager') return res.status(403).json({ message: 'Not authorized' });
 
+    const notifications = await Notification.findAll({
+      where: { 
+        user_id: manager.user_id,
+        type: 'vacation_request'
+      },
+      include: [
+        {
+          model: VacationRequest,
+          as: 'vacationRequest',
+          include: [{ model: Specialist, as: 'specialist', include: ['User'] }]
+        }
+      ],
+      order: [['created_at', 'DESC']]
+    });
+
+    res.status(200).json(notifications);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 // ✅ تحديث حالة الطلب من قبل المدير
 exports.updateVacationStatus = async (req, res) => {
   try {

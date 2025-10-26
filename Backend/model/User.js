@@ -62,6 +62,7 @@ const User = sequelize.define('User', {
 });
 
 User.belongsTo(Institution, { foreignKey: 'institution_id', as: 'institution' });
+// Add these associations after User definition
 
 module.exports = User;
 

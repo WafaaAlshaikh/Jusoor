@@ -13,8 +13,8 @@
   const childRoutes = require('./routes/childRoutes');
   const resourceRoutes = require('./routes/resourceRoutes');
   const institutionRoutes = require('./routes/institutionRoutes');
-
-
+const specialistChildrenRoutes = require('./routes/specialistChildrenRoutes');
+const communityRoutes = require('./routes/communityRoutes');
 
   const path = require('path');
 
@@ -40,8 +40,10 @@
   app.use('/api/children', childRoutes);
   app.use('/api', resourceRoutes);
   app.use('/api', institutionRoutes);
+  app.use('/api/community', communityRoutes);
+ app.use('/api/specialist', require('./routes/specialistSessionRoutes'));
 
-
+app.use('/api/specialist', specialistChildrenRoutes);
 
 
 

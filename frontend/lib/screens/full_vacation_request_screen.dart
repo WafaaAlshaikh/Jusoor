@@ -257,13 +257,13 @@ class _VacationRequestScreenState extends State<VacationRequestScreen> {
     }
 
     // التحقق من التعارض مع الأيام غير المتاحة
-    final conflictWithUnavailable = unavailableDates.any((date) =>
-    !date.isBefore(selectedStart!) && !date.isAfter(selectedEnd!));
-
-    if (conflictWithUnavailable) {
-      _showErrorSnackbar("Selected dates conflict with scheduled sessions");
-      return;
-    }
+    // final conflictWithUnavailable = unavailableDates.any((date) =>
+    // !date.isBefore(selectedStart!) && !date.isAfter(selectedEnd!));
+    //
+    // if (conflictWithUnavailable) {
+    //   _showErrorSnackbar("Selected dates conflict with scheduled sessions");
+    //   return;
+    // }
 
     setState(() => isLoading = true);
 

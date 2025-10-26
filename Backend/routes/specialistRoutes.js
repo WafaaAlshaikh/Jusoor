@@ -5,7 +5,8 @@ const {
   getUpcomingSessionsCount, 
   getChildrenCount, 
   addSession,
-  getChildrenInInstitution
+  getChildrenInInstitution,
+  getImminentSessions
 } = require('../controllers/specialistController');
 
 // 🔒 كل الرُتب بس للأخصائيين (تحقق من الـ role)
@@ -29,6 +30,9 @@ router.get('/me', authMiddleware, (req, res) => {
   }
   getProfileInfo(req, res);
 });
+
+
+router.get('/imminent-sessions', authMiddleware, specialistOnly, getImminentSessions);
 
 // 🔹 إضافة جلسة
 router.post('/add-session', authMiddleware, specialistOnly, addSession);
