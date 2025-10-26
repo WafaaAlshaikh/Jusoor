@@ -4,9 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/api_service.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:video_player/video_player.dart';
-
 
 class EducationalResourcesScreen extends StatefulWidget {
   const EducationalResourcesScreen({super.key});
@@ -23,7 +20,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
   String selectedType = 'All';
   List<String> typeOptions = ['All', 'Article', 'Video', 'PDF'];
 
-  // فلترة إضافية
+  // Additional filters
   String selectedAge = 'All Ages';
   String selectedSkill = 'All Skills';
   final List<String> ages = ['All Ages', '3-5', '6-9', '10-13', '14+'];
@@ -35,22 +32,8 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
   bool isSending = false;
   bool isChatOpen = false;
 
-
-
   List<String> weeklyPlan = [];
-
-  // ملاحظات شخصية
   Map<String, String> personalNotes = {};
-
-  // البحث الصوتي
-  late stt.SpeechToText speech;
-  bool isListening = false;
-
-  // فيديو مشغل
-  VideoPlayerController? videoController;
-  bool isVideoPlaying = false;
-
-
 
   @override
   void initState() {
@@ -59,15 +42,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
     loadFavorites();
     loadWeeklyPlan();
     loadNotes();
-    speech = stt.SpeechToText();
   }
-
-  @override
-  void dispose() {
-    videoController?.dispose();
-    super.dispose();
-  }
-
 
   Future<void> fetchResources() async {
     try {
@@ -104,7 +79,6 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
     await prefs.setStringList('favorites', favoriteLinks);
   }
 
-
   Future<void> loadWeeklyPlan() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -117,7 +91,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
     if (!weeklyPlan.contains(link)) {
       weeklyPlan.add(link);
       await prefs.setStringList('weekly_plan', weeklyPlan);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('تمت الإضافة للخطة الأسبوعية')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Added to weekly plan')));
     }
   }
 
@@ -145,7 +119,6 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
     await prefs.setString('notes', personalNotes.toString());
   }
 
-
   void sendMessage() async {
     final text = chatController.text.trim();
     if (text.isEmpty) return;
@@ -159,7 +132,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
     // Mock AI Response
     await Future.delayed(const Duration(seconds: 1));
     setState(() {
-      messages.add({'role': 'ai', 'text': '🤖 هذا رد AI على سؤالك: "$text"'});
+      messages.add({'role': 'ai', 'text': '🤖 AI Response: "$text"'});
       isSending = false;
     });
   }
@@ -229,24 +202,6 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
     );
   }
 
-
-  void startListening() async {
-    bool available = await speech.initialize();
-    if (available) {
-      setState(() => isListening = true);
-      speech.listen(onResult: (result) {
-        setState(() {
-          searchQuery = result.recognizedWords;
-        });
-      });
-    }
-  }
-
-  void stopListening() {
-    speech.stop();
-    setState(() => isListening = false);
-  }
-
   @override
   Widget build(BuildContext context) {
     final filteredResources = resources.where((r) {
@@ -273,15 +228,6 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
         backgroundColor: Colors.teal,
         centerTitle: true,
         elevation: 2,
-        actions: [
-          IconButton(
-            icon: Icon(isListening ? Icons.mic_off : Icons.mic),
-            onPressed: () {
-              if (isListening) stopListening();
-              else startListening();
-            },
-          )
-        ],
       ),
 
       body: isLoading
@@ -292,9 +238,9 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // ⭐ المفضلة الذكية
+            // Favorite Resources
             if (favoriteLinks.isNotEmpty) ...[
-              const Text("⭐ المفضلة", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text("⭐ Favorites", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               Container(
                 height: 100,
@@ -331,7 +277,8 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
               ),
               const SizedBox(height: 10),
             ],
-            // 🔍 البحث
+
+            // Search Field
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search resources...',
@@ -348,7 +295,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
             ),
             const SizedBox(height: 10),
 
-            // ---- Tabs / Chips للفئات ----
+            // Type Chips
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -374,7 +321,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
             ),
             const SizedBox(height: 10),
 
-            // ---- فلترة إضافية ----
+            // Additional filters
             Row(
               children: [
                 Expanded(
@@ -408,7 +355,7 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
             ),
             const SizedBox(height: 10),
 
-            // 🧩 قائمة الموارد
+            // Resource Cards
             ...filteredResources.map((r) {
               final isFav = favoriteLinks.contains(r['link']);
               final dateAdded = DateTime.tryParse(r['date'] ?? '') ?? DateTime.now();
@@ -423,50 +370,6 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
                   borderRadius: BorderRadius.circular(15),
                   onTap: () async {
                     await launchUrl(Uri.parse(r['link']));
-                    showModalBottomSheet(
-                      context: context,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                      builder: (context) => Container(
-                        padding: EdgeInsets.all(16),
-                        height: 260,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text("قد يعجبك أيضًا...", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                            const SizedBox(height: 10),
-                            Expanded(
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                children: getRecommended(r['type']).map((rec) => Container(
-                                  width: 180,
-                                  margin: EdgeInsets.only(right: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    boxShadow: [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 5, offset: Offset(0, 3))],
-                                  ),
-                                  child: InkWell(
-                                    onTap: () => launchUrl(Uri.parse(rec['link'])),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(rec['title'], style: TextStyle(fontWeight: FontWeight.bold)),
-                                          SizedBox(height: 4),
-                                          Text(rec['description'], maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                )).toList(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(15),
@@ -502,27 +405,6 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
                         ),
                         const SizedBox(height: 8),
                         Text(r['description'], style: const TextStyle(color: Colors.black54)),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('📅 ${r['date'] ?? 'Unknown'}', style: const TextStyle(fontSize: 12)),
-                            // ⭐ Rating
-                            Row(
-                              children: List.generate(5, (index) {
-                                int currentRating = r['rating'] ?? 0;
-                                return IconButton(
-                                  icon: Icon(index < currentRating ? Icons.star : Icons.star_border, color: Colors.amber, size: 20),
-                                  onPressed: () {
-                                    setState(() {
-                                      r['rating'] = index + 1;
-                                    });
-                                  },
-                                );
-                              }),
-                            ),
-                          ],
-                        )
                       ],
                     ),
                   ),
@@ -530,10 +412,9 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
               );
             }).toList(),
 
-
             const SizedBox(height: 10),
 
-            // ---- أقسام جانبية ----
+            // Side Sections
             Container(
               height: 180,
               child: ListView(
@@ -550,45 +431,37 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
                     title: '🧩 Activities',
                     icon: Icons.extension,
                     items: [
-                      {'title': 'لعبة تحسين التركيز', 'link': 'https://example.com/activity1'},
-                      {'title': 'نشاط نطق للأطفال', 'link': 'https://example.com/activity2'},
-                      {'title': 'تمارين سلوكية ممتعة', 'link': 'https://example.com/activity3'},
+                      {'title': 'Focus Game', 'link': 'https://example.com/activity1'},
+                      {'title': 'Speech Activity', 'link': 'https://example.com/activity2'},
+                      {'title': 'Behavior Exercise', 'link': 'https://example.com/activity3'},
                     ],
                   ),
                   const SizedBox(width: 10),
                   _buildSideSection(
-                    title: '🎥 Videos',
-                    icon: Icons.video_library,
-                    items: [
-                      {'title': 'تعليم الألوان', 'link': 'https://youtube.com/video1'},
-                      {'title': 'تمارين نطق', 'link': 'https://youtube.com/video2'},
-                    ],
-                  ),
-                  const SizedBox(width: 10),
-                  _buildSideSection(
-                    title: '📰 News & 🧑‍🏫 Tips',
+                    title: '📰 News & Tips',
                     icon: Icons.newspaper,
                     items: [
-                      {'title': 'مقال عن التعليم الخاص', 'link': 'https://example.com/news1'},
-                      {'title': 'نصيحة من أخصائي', 'link': 'https://example.com/tip1'},
+                      {'title': 'Special Education Article', 'link': 'https://example.com/news1'},
+                      {'title': 'Expert Tip', 'link': 'https://example.com/tip1'},
                     ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 60), // مساحة للشات
+
+            const SizedBox(height: 60), // space for chat
           ],
         ),
       ),
 
-      // 💬 زر الشات العائم
+      // Floating Chat Button
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         onPressed: () => setState(() => isChatOpen = !isChatOpen),
         child: Icon(isChatOpen ? Icons.close : Icons.chat_bubble),
       ),
 
-      // 💬 واجهة الشات المنبثقة
+      // Chat Bottom Sheet
       bottomSheet: isChatOpen
           ? Container(
         height: 420,
@@ -627,9 +500,9 @@ class _EducationalResourcesScreenState extends State<EducationalResourcesScreen>
             Wrap(
               spacing: 8,
               children: [
-                "نصائح لفرط الحركة",
-                "تمارين للنطق في المنزل",
-                "كيف أتعامل مع الطفل التوحدي",
+                "Hyperactivity tips",
+                "Home speech exercises",
+                "How to handle autistic child",
               ].map((q) => ActionChip(
                 label: Text(q),
                 onPressed: () {
