@@ -108,44 +108,6 @@ class ApiService {
     }
   }
 
-
-
-  static Future<Map<String, dynamic>> getChildren({
-    required String token,
-    String? search,
-    String? gender, // اسم التشخيص أو id
-    String? diagnosis,
-    String? sort, // 'name' | 'age' | 'lastSession'
-    String? order, // 'asc' | 'desc'
-    int? page,
-    int? limit,
-  }) async {
-    final uri = Uri.parse('http://10.0.2.2:5000/api/children').replace(
-      queryParameters: {
-        if (search != null && search.isNotEmpty) 'search': search,
-        if (gender != null && gender.isNotEmpty && gender != 'All') 'gender': gender,
-        if (diagnosis != null && diagnosis.isNotEmpty && diagnosis != 'All') 'diagnosis': diagnosis,
-        if (sort != null) 'sort': sort,
-        if (order != null) 'order': order,
-        if (page != null) 'page': page.toString(),
-        if (limit != null) 'limit': limit.toString(),
-      },
-    );
-    final response = await http.get(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-    );
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> data = jsonDecode(response.body);
-      return data; // يحتوي على { data: [...], meta: {...} }
-    } else {
-      throw Exception('Failed to fetch children: ${response.statusCode} - ${response.body}');
-    }
-  }
-
   static Future<Child> addChild(String token, Child child) async {
     final response = await http.post(
       Uri.parse('http://10.0.2.2:5000/api/children'),
@@ -315,6 +277,46 @@ class ApiService {
       return List<Map<String, dynamic>>.from(data);
     } else {
       throw Exception('Failed to fetch institutions: ${response.statusCode}');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getChildren({
+    required String token,
+    String? search,
+    String? gender,
+    String? diagnosis,
+    String? registrationStatus, // ⬅️ جديد
+    String? sort,
+    String? order,
+    int? page,
+    int? limit,
+  }) async {
+    final uri = Uri.parse('http://10.0.2.2:5000/api/children').replace(
+      queryParameters: {
+        if (search != null && search.isNotEmpty) 'search': search,
+        if (gender != null && gender.isNotEmpty && gender != 'All') 'gender': gender,
+        if (diagnosis != null && diagnosis.isNotEmpty && diagnosis != 'All') 'diagnosis': diagnosis,
+        if (registrationStatus != null && registrationStatus.isNotEmpty && registrationStatus != 'All') 'registration_status': registrationStatus, // ⬅️ جديد
+        if (sort != null) 'sort': sort,
+        if (order != null) 'order': order,
+        if (page != null) 'page': page.toString(),
+        if (limit != null) 'limit': limit.toString(),
+      },
+    );
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> data = jsonDecode(response.body);
+      return data;
+    } else {
+      throw Exception('Failed to fetch children: ${response.statusCode} - ${response.body}');
     }
   }
 

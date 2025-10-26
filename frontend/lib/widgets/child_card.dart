@@ -18,6 +18,31 @@ class ChildCard extends StatelessWidget {
     required this.onDelete,
   });
 
+  // ⬇️⬇️⬇️ أضف دالة للحصول على لون حالة التسجيل ⬇️⬇️⬇️
+  Color _registrationStatusColor(String status) {
+    switch (status) {
+      case 'Approved':
+        return Colors.green;
+      case 'Pending':
+        return Colors.orange;
+      case 'Not Registered':
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // ⬇️⬇️⬇️ أضف دالة للحصول على أيقونة حالة التسجيل ⬇️⬇️⬇️
+  IconData _registrationStatusIcon(String status) {
+    switch (status) {
+      case 'Approved':
+        return Icons.check_circle;
+      case 'Pending':
+        return Icons.pending;
+      case 'Not Registered':
+      default:
+        return Icons.person_outline;
+    }
+  }
   // helper لتنسيق آخر جلسة
   String get _lastSessionText {
     if (child.lastSessionDate != null) {
@@ -50,12 +75,36 @@ class ChildCard extends StatelessWidget {
       child: ListTile(
         onTap: onView,
         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        leading: CircleAvatar(
-          radius: 28,
-          backgroundColor: _conditionColor(child.condition).withOpacity(0.2),
-          backgroundImage: (child.photo.isNotEmpty) ? NetworkImage(child.photo) : null,
-          child: (child.photo.isEmpty) ? Text(child.fullName.isNotEmpty ? child.fullName[0].toUpperCase() : '?',
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)) : null,
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: _conditionColor(child.condition).withOpacity(0.2),
+              backgroundImage: (child.photo.isNotEmpty) ? NetworkImage(child.photo) : null,
+              child: (child.photo.isEmpty) ? Text(
+                child.fullName.isNotEmpty ? child.fullName[0].toUpperCase() : '?',
+                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+              ) : null,
+            ),
+            // ⬇️⬇️⬇️ أيقونة صغيرة لحالة التسجيل ⬇️⬇️⬇️
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: _registrationStatusColor(child.registrationStatus), width: 2),
+                ),
+                child: Icon(
+                  _registrationStatusIcon(child.registrationStatus),
+                  color: _registrationStatusColor(child.registrationStatus),
+                  size: 12,
+                ),
+              ),
+            ),
+          ],
         ),
         title: Text(child.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Column(
@@ -64,20 +113,42 @@ class ChildCard extends StatelessWidget {
             const SizedBox(height: 4),
             Row(
               children: [
+                // حالة التشخيص
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _conditionColor(child.condition).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(child.condition ?? '-', style: TextStyle(color: _conditionColor(child.condition), fontSize: 12)),
+                  child: Text(
+                    child.condition ?? '-',
+                    style: TextStyle(color: _conditionColor(child.condition), fontSize: 12),
+                  ),
                 ),
                 const SizedBox(width: 8),
-                Text(_lastSessionText, style: const TextStyle(fontSize: 12)),
-                const SizedBox(width: 8),
-                if (_upcomingCountText.isNotEmpty)
-                  Chip(label: Text(_upcomingCountText)),
+
+                // ⬇️⬇️⬇️ حالة التسجيل ⬇️⬇️⬇️
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _registrationStatusColor(child.registrationStatus).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    child.registrationStatus,
+                    style: TextStyle(
+                      color: _registrationStatusColor(child.registrationStatus),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _lastSessionText,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
@@ -93,3 +164,4 @@ class ChildCard extends StatelessWidget {
     );
   }
 }
+
